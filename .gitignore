@@ -1,0 +1,6 @@
+data
+local_*
+
+# python
+__pycache__
+.ipynb_checkpoints
