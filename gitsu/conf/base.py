@@ -8,6 +8,10 @@ settings modules.
 import os 
 import logging
 
+
+GITHUB_TOKEN = ''
+
+
 # =========================================================================== #
 # logging
 
@@ -15,7 +19,7 @@ CONFIGURE_LOGGING = True # if False, logger will not be configured
 LOGGING_LEVEL = None  # debug, info, warning, error/exception, critical
 LOGGING_CONFIG = {  # used in logging.config.dictConfig(...)
     'version': 1,
-    'disable_existing_loggers': True,
+   # 'disable_existing_loggers': True,
     'formatters': {
         'default': {
             'format': (
@@ -40,8 +44,11 @@ LOGGING_CONFIG = {  # used in logging.config.dictConfig(...)
         'github3.py': {
             'handlers': ['console'],
             'level': logging.DEBUG,
-        }
-
+        }, 
+        'gitsu': {
+            'handlers': ['console'],
+            'level': logging.DEBUG,
+        },
     }  
 }
 
@@ -56,21 +63,24 @@ PROJECT_PATH = os.path.dirname(
     MODULE_ROOT_PATH
 )
 
-
 DATA_PATH = os.path.join(
     PROJECT_PATH, 'data'
 )
 
+RESOURCES_PATH = os.path.join(
+    PROJECT_PATH, 'resources'
+)
 
 # =========================================================================== #
 # Application settings 
 DEBUG = False
 
 # =========================================================================== #
+# Matplotlib
+STYLESHEET = os.path.join(RESOURCES_PATH, 'default.mplstyle')
 
-DB_CONNECTION_PATTERN = (
-    '{engine}://{username}:{password}@{host}:{port}/{database}'
-)
+
+# =========================================================================== #
 
 DATABASES = {
     'db_example_name': {
@@ -81,5 +91,11 @@ DATABASES = {
         'port': 5432,
         'database': '',
     },
+    'simple_db': {
+        'engine': 'sqlite',
+        'filepath': os.path.join(
+            DATA_PATH, 'gitsu.db',
+        )
+    }
 }
 
