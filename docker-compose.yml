@@ -1,0 +1,24 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: postgres:10.3
+    expose:
+      - "5432"    
+    volumes:
+      - ./postgresql/scripts:/opt/postgresql/scripts
+    environment:
+      # TODO: change this password, currently checked into git
+      POSTGRES_PASSWORD: A224697C73DDC7439E35E7272909246D0AB8E5BBE
+      POSTGRES_USER: gitsu
+      POSTGRES_DB: gitsu
+
+  gitsu:
+    build: ./gitsu/.
+    volumes:
+      - ./:/opt/gitsu
+    depends_on:
+      - db
+    links:
+      - db
