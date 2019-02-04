@@ -9,3 +9,12 @@ This helps download and analyse github issues
 1. Activate virtualenv `workon gitsu`
 1. Install packages `pip install -r requirements.py`
 1. Add local directory to path `add2virtualenv <project_dir>`
+
+
+## Architecture
+
+1. postgresql -- database backend
+1. gitsu-etl -- etl processes to get data in place
+1. gitsu-analytics -- analysis processes including notebooks
+1. gitsu-web -- frontend visualization
+
