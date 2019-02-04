@@ -1,24 +1,23 @@
 #!env python
-GITHUB_TOKEN = 'a292a9e6589851f265d22d54ddf9cbdf86df88e7'
-ORG = 'WordPress'
-REPO = 'gutenberg'
-OUTPUT_FILENAME = '{}_{}_issues.json'.format(ORG, REPO)
-ISSUES_SINCE = '2018-01-01' 
-
 import os
 import logging
 
+import copy
 import json
 import github3
 import pandas as pd
 import gitsu
+import time
+
+ORG = 'WordPress'
+REPO = 'gutenberg'
 
 
 # Get the Github repo object
 repo = (
     github3
     .login(
-        token=GITHUB_TOKEN,
+        token=gitsu.settings.GITHUB_TOKEN,
     )
     .repository(ORG, REPO)
 )
@@ -26,33 +25,60 @@ repo = (
 # create an issues iterator to access all the issues
 iter_issues = repo.issues(
     #YYYY-MM-DDTHH:MM:SSZ    
-    since=pd.Timestamp(ISSUES_SINCE).strftime('%Y-%m-%dT%H:%M:%SZ'),
-    sort='created',
-    direction='asc',
+    #since='2018-05-01T00:00:00Z',
+    sort='updated',
+    direction='desc',
+    state='all',
 )
+iter_issues.params.update({
+    'page': 33,
+    'per_page': 300,
+})
 
-# loop the iterator and get all issues
-issues = []
-page_cnt = 0
-prev_req_url = None
-for issue in iter_issues:
-    # if the page changed, log progress information
-    req_url = iter_issues.last_response.url
-    if req_url != prev_req_url:
-        prev_req_url = req_url
-        page_cnt += 1
-        logging.info('Pagination {}'.format(page_cnt))
-        logging.info(req_url)
-        logging.info('Issues created {}'.format(issue.created_at.date().isoformat()))
 
-    # append the issuees
-    issues.append(issue.as_dict())
+CREATED = []
 
-# write issues out to file
-if not os.path.isdir(gitsu.settings.DATA_PATH):
-    os.makedirs(gitsu.settings.DATA_PATH)
-fp = os.path.join(gitsu.settings.DATA_PATH, OUTPUT_FILENAME)
-with open(fp, 'w') as f:
-    json.dump(issues, f)
-logging.info('done!')
+def callback(issue):
+    global CREATED
 
+    if isinstance(issue, dict):
+        data = issue
+    else:
+        data = issue._json_data
+
+    data['repo'] = {
+        'name': REPO,
+        'organization_name': ORG,
+    }
+
+    key = 'github_issue_{}'.format(data['id'])
+    with gitsu.db_session_context() as sess:
+        obj = None
+        created = not gitsu.models.DataLake._query.exists(session=sess, key=key)
+        if created:
+            obj = gitsu.models.DataLake(
+                key=key, schema='github_issue', data=data,
+            )
+            sess.add(obj)
+    CREATED.append(created)
+    return created
+
+
+def new_page_callback(iterator, item):
+    ratelimit_remaining = getattr(iterator, 'ratelimit_remaining', -1)
+    if ratelimit_remaining < 10:
+        logging.info('Waiting...')
+        time.sleep(15.0 * 60.0)
+
+    global CREATED
+    n = len(CREATED)
+    s = sum(CREATED)
+    if n > 1 and s == 0:
+        raise Exception('stop!')
+    CREATED = []
+    gitsu.github.github_default_new_page_callback(iterator, item)
+
+
+issues = gitsu.github.github_iterator_results(
+    iter_issues, callback=callback, new_page_callback=new_page_callback,
+)
