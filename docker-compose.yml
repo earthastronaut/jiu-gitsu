@@ -15,14 +15,18 @@ services:
       POSTGRES_DB: gitsu
 
   # Service for ETL
-  gitsu:
-    build: ./gitsu/.
+  gitsu_etl:
+    build: ./gitsu_etl/.
     volumes:
-      - ./:/opt/gitsu
+      - ./gitsu_etl:/opt/gitsu_etl
+#      - ./:/opt/gitsu_root
     depends_on:
       - db
     links:
       - db
+    # environment:
+    #   PYTHONPATH: "${PYTHONPATH}:/opt/gitsu_root/" # local_settings.py      
+    #   SETTINGS_MODULE: 'local_settings'
 
   # Service for Analytics
   gitsu_analytics:
@@ -40,5 +44,5 @@ services:
       JUPYTER_CONFIG_DIR: '/opt/gitsu_analytics/'       
       JUPYTER_PASSWORD: 'abc123'    
       JUPYTER_ENABLE_LAB: 'yes'
-      PYTHONPATH: "${PYTHONPATH}:/opt/gitsu/" # local_settings.py      
-      SETTINGS_MODULE: 'local_settings'
+      #PYTHONPATH: "${PYTHONPATH}:/opt/gitsu/" # local_settings.py      
+      #SETTINGS_MODULE: 'local_settings'
