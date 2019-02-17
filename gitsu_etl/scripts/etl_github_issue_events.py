@@ -5,27 +5,40 @@ import pytz
 import gitsu
 
 
-def etl_event(event):
+def etl_event(event, sess):
     actor = event['actor']
     user_ext_id = None if actor is None else actor['id']
+    event_ext_id = event['id']
 
-    _, created = (
+    obj = (
         gitsu
         .models
         .GitHubIssueEvent
         ._query
-        .exists_or_create(
-            event_ext_id=event['id'],
+        .get(
+            _session=sess,
+            key=event_ext_id
+        )
+    )
+    if obj is not None:
+        return False
+    obj = (
+        gitsu
+        .models
+        .GitHubIssueEvent(
+            event_ext_id=event_ext_id,
             event_issue_ext_id=event['issue_id'],
             event_user_ext_id=user_ext_id,
             event_created_at=event['created_at'],
             event_label=event.get('label', {}).get('name', None),
+            event=event.get('event', None),
         )
     )
-    if created:
-        logging.info('For issue {}, create event {}'.format(
-            event['issue_id'], event['id']))
-    return created
+    sess.add(obj)
+
+    logging.info('For issue {}, create event {}'.format(
+        event['issue_id'], event['id']))
+    return True
 
 
 def etl_issue_events(dl_events):
@@ -36,8 +49,9 @@ def etl_issue_events(dl_events):
         logging.info('no events')
     elif isinstance(data, list):
         logging.info('ETL events')
-        for event in data:
-            etl_event(event)
+        with gitsu.db_session_context() as sess:
+            for event in data:
+                etl_event(event, sess)
     else:
         raise Exception('unknown event type {}'.format(type(data)))
 

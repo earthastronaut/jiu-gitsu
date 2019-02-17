@@ -158,6 +158,7 @@ class GitHubIssueEvent(Base):
     event_issue = relationship("GitHubIssue", back_populates="issue_events")
     event_created_at = Column(DateTime)
     event_label = Column(String)
+    event = Column(String)
     event_user_ext_id = Column(Integer, ForeignKey('github_user.user_ext_id'))
     event_user = relationship("GitHubUser", back_populates="user_events")
     dw_row_created_at = Column(DateTime, default=datetime.datetime.utcnow)
