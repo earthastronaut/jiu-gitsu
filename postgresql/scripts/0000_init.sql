@@ -3,6 +3,21 @@ CREATE DATABASE gitsu;
 GRANT ALL PRIVILEGES ON DATABASE gitsu TO gitsu;
 
 
+CREATE TABLE IF NOT EXISTS public.data_lake (
+	key VARCHAR(256) PRIMARY KEY
+	, schema VARCHAR(256)
+	, data JSONB NULL
+	, dw_created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+	, dw_updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+	, dw_etl_at TIMESTAMP WITH TIME ZONE NULL
+	, dw_etl_job_name VARCHAR(256) NULL
+);
+
+CREATE INDEX IF NOT EXISTS 
+	idx__data_lake__schema_lower
+	ON public.data_lake ((lower(schema)));
+
+
 /* Repo */
 CREATE TABLE IF NOT EXISTS public.github_repo (
 	repo_id VARCHAR(128) PRIMARY KEY
@@ -13,6 +28,15 @@ CREATE TABLE IF NOT EXISTS public.github_repo (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx__github_repo__repo_name ON public.github_repo (repo_name);
+
+
+/* Github User */
+CREATE TABLE IF NOT EXISTS public.github_user (
+	user_ext_id INTEGER PRIMARY KEY
+	, user_name VARCHAR(64)
+    , dw_row_created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    , dw_row_updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP	
+);
 
 
 /* Issue */
@@ -40,15 +64,6 @@ CREATE INDEX IF NOT EXISTS
 	);
 
 
-/* Github User */
-CREATE TABLE IF NOT EXISTS public.github_user (
-	user_ext_id INTEGER PRIMARY KEY
-	, user_name VARCHAR(64)
-    , dw_row_created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    , dw_row_updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP	
-);
-
-
 CREATE TABLE IF NOT EXISTS public.github_issue_event (
 	event_ext_id INTEGER PRIMARY KEY
 	, event VARCHAR(32)	
@@ -60,18 +75,3 @@ CREATE TABLE IF NOT EXISTS public.github_issue_event (
     , dw_row_created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     , dw_row_updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP	
 );
-
-
-CREATE TABLE IF NOT EXISTS public.data_lake (
-	key VARCHAR(256) PRIMARY KEY
-	, schema VARCHAR(256)
-	, data JSONB NULL
-	, dw_created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-	, dw_updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-	, dw_etl_at TIMESTAMP WITH TIME ZONE NULL
-	, dw_etl_job_name VARCHAR(256) NULL
-);
-
-CREATE INDEX IF NOT EXISTS 
-	idx__data_lake__schema_lower
-	ON public.data_lake ((lower(schema)));
