@@ -14,7 +14,8 @@ RUN jupyter labextension install jupyterlab-drawio
 # Python Requirements
 RUN pip install -U pip
 RUN pip install -r requirements_py3.txt
-RUN pip freeze | tee -a freeze_requirements_py3.txt
+RUN pip freeze
+# RUN pip freeze | tee -a freeze_requirements_py3.txt
 
 # Notebooks Entry Directory
 WORKDIR /opt/gitsu_analytics/notebooks

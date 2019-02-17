@@ -6,7 +6,7 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import exists
 
-from gitsu.conf import settings
+from .conf import settings
 
 
 ENGINES = {}

@@ -37,7 +37,7 @@ LOGGING_CONFIG:
 PROJECT_PATH: '{MODULE_ROOT_PATH}/..'
 RESOURCES_PATH: '{MODULE_ROOT_PATH}/resources'
 
-STYLESHEET_FILEPATH: '{RESOURCES_PATH}/resources/default.mplstyle'
+STYLESHEET_FILEPATH: '{RESOURCES_PATH}/default.mplstyle'
 
 # --------------------------------------------------------------------------- #
 # Databases
