@@ -1,5 +1,9 @@
 data
 local_*
+untracked_*
+
+# jupyter
+gitsu_analytics/lab
 
 # python
 __pycache__
