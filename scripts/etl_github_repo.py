@@ -10,6 +10,7 @@ def etl_github_repo(repo):
         .GitHubRepo
         ._query
         .exists_or_create(
+            repo_id=repo['name'],
             repo_name=repo['name'],
             repo_organization_name=repo['organization_name'],
         )
@@ -35,4 +36,4 @@ for dl_issue in iterrows:
     repo = dl_issue.data['repo']
     if repo not in repos:
         etl_github_repo(repo)
-        repos.appen(repo)
+        repos.append(repo)

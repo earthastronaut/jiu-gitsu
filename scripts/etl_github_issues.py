@@ -2,26 +2,9 @@
 import dateutil
 import datetime
 import pytz
-import functools
 import logging 
 
 import gitsu
-
-
-@functools.lru_cache()
-def fetch_single_object(Model, _session=None, **filter_):
-	objs = (
-		Model
-		._query 
-		.filter(_session=_session, **filter_)
-		.all()
-	)
-	if len(objs) == 0:
-		raise Exception('Value not found {}'.format(data['user']))
-	elif len(objs) == 1:
-		return objs[0]
-	else:
-		raise Exception('Too many values found {}'.format(data['user']))	
 
 
 def etl_issue(dl_issue, session, create_only=True):
@@ -62,20 +45,8 @@ def etl_issue(dl_issue, session, create_only=True):
 	obj.issue_is_pull_request = 'pull_request' in data
 	obj.issue_events_url =data['events_url']
 
-	user = fetch_single_object(
-		gitsu.models.GitHubUser,
-		_session=session,		
-		user_ext_id=data['user']['id'],
-	)
-	obj.issue_user_id = user.user_id
-
-	repo = fetch_single_object(
-		gitsu.models.GitHubRepo,
-		_session=session,
-		repo_name=data['repo']['name'],
-		repo_organization_name=data['repo']['organization_name']
-	)
-	obj.issue_repo_id = repo.repo_id
+	obj.issue_user_ext_id = data['user']['id']
+	obj.issue_repo_id = data['repo']['name']
 
 	if created:
 		session.add(obj)

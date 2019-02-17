@@ -1,5 +1,6 @@
 #!env python
 import logging
+import time
 import gitsu
 
 
@@ -19,23 +20,53 @@ def etl_user(user_data):
     return created
 
 
-iterrows = (
-    gitsu
-    .models
-    .DataLake
-    ._query
-    .filter(
-        schema='github_issue',
-        dw_etl_at__is=None,
+def etl_users_from_issues():
+    logging.info('Starting Github Users ETL based on issues')
+    iterrows = (
+        gitsu
+        .models
+        .DataLake
+        ._query
+        .filter(
+            schema='github_issue',
+            dw_etl_at__is=None,
+        )
     )
-    .all()
-)
+
+    unique_user_data = {}
+    for dl_issue in iterrows:
+        ud = dl_issue.data['user']
+        unique_user_data[ud['id']] = ud
+
+    for user_data in unique_user_data.values():
+        etl_user(user_data)
 
 
-unique_user_data = {}
-for dl_issue in iterrows:
-    ud = dl_issue.data['user']
-    unique_user_data[ud['id']] = ud
+def etl_users_from_issue_events():
+    logging.info('Starting Github Users ETL based on issue events')
+    iterrows = (
+        gitsu
+        .models
+        .DataLake
+        ._query
+        .filter(
+            schema='github_issue_event',
+            dw_etl_at__is=None,
+        )
+    )
 
-for user_data in unique_user_data.values():
-    etl_user(user_data)
+    unique_user_data = {}
+    for dl_event in iterrows:
+        for evt in dl_event.data:
+            ud = evt['actor']
+            if ud is not None:
+                unique_user_data[ud['id']] = ud
+
+    for user_data in unique_user_data.values():
+        etl_user(user_data)
+
+
+if __name__ == '__main__':
+    logging.info('Starting GitHub Users ELT')
+    etl_users_from_issues()
+    etl_users_from_issue_events()
