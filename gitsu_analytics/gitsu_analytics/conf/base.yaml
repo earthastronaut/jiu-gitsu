@@ -1,0 +1,60 @@
+# =========================================================================== #
+# Configuration File
+# =========================================================================== #
+
+
+# --------------------------------------------------------------------------- #
+# Logging
+# --------------------------------------------------------------------------- #
+LOGGING_CONFIG:
+  version: 1
+  disable_existing_logging: True
+  formatters:
+    default:
+      format: 
+        '{asctime} {process} {module:10}:L{lineno} {levelname:8} | {message}'
+      datefmt: '%Y-%m-%dT%H:%M:%S'
+      style: '{'
+  handlers:
+    console:
+      class: 'logging.StreamHandler'
+      formatter: 'default'
+  root:
+    level: 'INFO'
+    handlers:
+      - 'console'
+  loggers:
+    gitsu_analytics: 
+      level: 'DEBUG'
+      handlers:
+        - 'console'
+
+# --------------------------------------------------------------------------- #
+# Paths
+# --------------------------------------------------------------------------- #
+
+# MODULE_ROOT_PATH implicit os.path.dirname(file)
+PROJECT_PATH: '{MODULE_ROOT_PATH}/..'
+RESOURCES_PATH: '{MODULE_ROOT_PATH}/resources'
+
+STYLESHEET_FILEPATH: '{RESOURCES_PATH}/resources/default.mplstyle'
+
+# --------------------------------------------------------------------------- #
+# Databases
+# --------------------------------------------------------------------------- #
+
+DATABASES: 
+  db_example_name:
+    engine: 'postgresql+psycopg2'
+    username: ''
+    password: ''
+    host: '10.0.0.0'
+    port: 5432
+    database: ''
+
+# --------------------------------------------------------------------------- #
+# Project
+# --------------------------------------------------------------------------- #
+
+GITHUB_TOKEN: ''
+

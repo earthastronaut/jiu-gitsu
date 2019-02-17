@@ -19,21 +19,20 @@ services:
     build: ./gitsu_etl/.
     volumes:
       - ./gitsu_etl:/opt/gitsu_etl
-#      - ./:/opt/gitsu_root
+      - ./:/opt/gitsu_root
     depends_on:
       - db
     links:
       - db
-    # environment:
-    #   PYTHONPATH: "${PYTHONPATH}:/opt/gitsu_root/" # local_settings.py      
-    #   SETTINGS_MODULE: 'local_settings'
+    environment:
+      CONFIG_FILES: 'base.yaml:/opt/gitsu_root/local_settings.yaml'
 
   # Service for Analytics
   gitsu_analytics:
     build: ./gitsu_analytics/.
     volumes:
       - ./gitsu_analytics:/opt/gitsu_analytics
-      - ./:/opt/gitsu
+      - ./:/opt/gitsu_root
     ports:
       - 8888:8888
     depends_on:
@@ -44,5 +43,4 @@ services:
       JUPYTER_CONFIG_DIR: '/opt/gitsu_analytics/'       
       JUPYTER_PASSWORD: 'abc123'    
       JUPYTER_ENABLE_LAB: 'yes'
-      #PYTHONPATH: "${PYTHONPATH}:/opt/gitsu/" # local_settings.py      
-      #SETTINGS_MODULE: 'local_settings'
+      CONFIG_FILES: 'base.yaml:/opt/gitsu_root/local_settings.yaml'
