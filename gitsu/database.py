@@ -63,7 +63,6 @@ def create_db_engine(db_connection_name='default', **create_engine_kws):
         connection_pattern = (
             '{engine}://{filepath}'
         ).format(**conn_kws)
-    print(connection_pattern)
     engine = sqlalchemy.create_engine(connection_pattern, **engine_kws)
     
     if conn_kws.get('read_only', False):

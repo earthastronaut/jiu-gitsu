@@ -116,46 +116,34 @@ class GitHubUser(Base):
     );
     """    
     __tablename__ = 'github_user'
-    user_id = Column(Integer, primary_key=True)
-    user_ext_id = Column(Integer)
+    user_ext_id = Column(Integer, primary_key=True)
     user_name = Column(String)
     user_events = relationship("GitHubIssueEvent", back_populates='event_user')
+    user_issues = relationship("GitHubIssue", back_populates='issue_user')
     dw_row_created_at = Column(DateTime, default=datetime.datetime.utcnow)
     dw_row_updated_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
-
 class GitHubRepo(Base):
     __tablename__ = 'github_repo'
-    repo_id = Column(Integer, primary_key=True)
+    repo_id = Column(String, primary_key=True)
     repo_name = Column(String)
     repo_organization_name = Column(String)
     dw_row_created_at = Column(DateTime, default=datetime.datetime.utcnow)
     dw_row_updated_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
-
 class GitHubIssue(Base):
-    """
-    CREATE TABLE IF NOT EXISTS public.issue (
-        issue_id INTEGER PRIMARY KEY
-        , issue_state VARCHAR(16) NOT NULL
-        , issue_comments INTEGER DEFAULT 0
-        , issue_created_at TIMESTAMP WITH TIME ZONE NOT NULL
-        , issue_closed_at TIMESTAMP WITH TIME ZONE
-        , issue_is_pull_request BOOLEAN
-        , issue_events_url TEXT
-    );
-    """   
     __tablename__ = 'github_issue'
-    issue_id = Column(Integer, primary_key=True)
-    issue_ext_id = Column(Integer)    
+    issue_ext_id = Column(Integer, primary_key=True)   
     issue_state = Column(String)
     issue_comments = Column(Integer)
     issue_events = relationship("GitHubIssueEvent", back_populates='event_issue')
     issue_created_at = Column(DateTime)
     issue_closed_at = Column(DateTime)
     issue_updated_at = Column(DateTime)
+    issue_user_ext_id = Column(Integer, ForeignKey('github_user.user_ext_id'))
+    issue_user = relationship("GitHubUser", back_populates="user_issues")
     issue_is_pull_request = Column(Boolean)
     issue_events_url = Column(String)
     issue_events_last_loaded_at = Column(DateTime)
@@ -164,23 +152,13 @@ class GitHubIssue(Base):
 
 
 class GitHubIssueEvent(Base):
-    """
-    CREATE TABLE IF NOT EXISTS public.event (
-        event_id INTEGER PRIMARY KEY
-        , event VARCHAR(32)    
-        , event_issue_id INTEGER REFERENCES public.issue(issue_id)
-        , event_actor_id INTEGER REFERENCES public.user(user_id)
-        , event_actor_login VARCHAR(64)
-        , event_data JSON NULL
-    );
-    """
     __tablename__ = 'github_issue_event'
-    event_id = Column(Integer, primary_key=True)    
-    event_ext_id = Column(Integer)
-    event_issue_id = Column(Integer, ForeignKey('github_issue.issue_id'))
+    event_ext_id = Column(Integer, primary_key=True)
+    event_issue_ext_id = Column(Integer, ForeignKey('github_issue.issue_ext_id'))
     event_issue = relationship("GitHubIssue", back_populates="issue_events")
-
-    event_user_id = Column(Integer, ForeignKey('github_user.user_id'))
+    event_created_at = Column(DateTime)
+    event_label = Column(String)
+    event_user_ext_id = Column(Integer, ForeignKey('github_user.user_ext_id'))
     event_user = relationship("GitHubUser", back_populates="user_events")
     dw_row_created_at = Column(DateTime, default=datetime.datetime.utcnow)
     dw_row_updated_at = Column(DateTime, default=datetime.datetime.utcnow)
