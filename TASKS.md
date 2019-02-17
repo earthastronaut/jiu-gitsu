@@ -36,3 +36,17 @@ For API web access.
 With the yaml config there's no guarentee of keys being present. How to provide that guarentee? 
 
 Also, misspellings are more difficult to debug. 
+
+## Task-8 pip freeze on build
+
+I want the python requirements files to be flexible so when you do a fresh
+build it tries the latest-and-greatest. 
+
+However, I also want to freeze a version and track it in github. The flow I want:
+
+1. `docker-compose build` > generate a pip freeze file
+1. check that pip-freeze file into git
+1. optional build with specific pip freeze...
+
+
+## Task-9
