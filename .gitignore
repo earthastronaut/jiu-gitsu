@@ -5,6 +5,9 @@ untracked_*
 # jupyter
 gitsu_analytics/lab
 
+# sublimetext
+*.sublime-workspace
+
 # python
 __pycache__
 .ipynb_checkpoints
