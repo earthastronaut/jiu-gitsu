@@ -30,8 +30,6 @@ Data Pipeline
 
 For API web access.
 
-## Task-6 abstract configuration files to share across gitsu_* files 
-
 
 ## Task-7 settings config schema
 
