@@ -26,13 +26,6 @@ Data Pipeline
 1. download_github_issue_events.py
 
 
-## Task-4 create separate gitsu-etl and gitsu-analytics
-
-Rename gitsu to gitsu-etl
-Create new gitsu-analytics project
-Remove all analytics components from gitsu-etl
-
-
 ## Task-5 create gitsu-web
 
 For API web access.
