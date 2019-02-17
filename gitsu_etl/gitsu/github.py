@@ -56,6 +56,8 @@ def github_default_callback(item):
 def github_default_new_page_callback(iterator, item):
 	if hasattr(item, 'updated_at'):
 		logging.info('{} updated_at {}'.format(item, item.updated_at))
+	if hasattr(item, 'created_at'):
+		logging.info('{} created_at {}'.format(item, item.created_at))
 
 
 def github_iterator_results(iterator, limit=None, callback=github_default_callback, new_page_callback=github_default_new_page_callback):
