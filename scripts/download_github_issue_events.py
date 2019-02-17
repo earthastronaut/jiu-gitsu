@@ -11,7 +11,7 @@ import requests
 
 
 UPDATE_EVENTS_MIN = datetime.datetime.now(pytz.timezone('UTC')) - datetime.timedelta(days=7)
-
+ISSUE_EVENTS_SCHEMA_NAME = 'github_issue_event'
 
 class Event(gitsu.github.github3.models.GitHubCore):
     def __init__(self, json, session):
@@ -26,23 +26,12 @@ class Event(gitsu.github.github3.models.GitHubCore):
         self._json_data = json
 
 
-def get_events(events_url):
-  if pd.Timestamp(issue['updated_at']) < EVENTS_TIME_MIN:
-      return None
-  url = issue['events_url']
-  events = []
-  for e in gitsu.github_client._iter(-1, url, Event):
-      e._json_data['issue_id'] = issue['id']
-      events.append(e._json_data)
-  return events
-
-
 def extract_transform_issue_events(issue):
     url = issue.issue_events_url
     logging.info('fetch data from \'{}\''.format(url))
     events = []
     for e in gitsu.github_client._iter(-1, url, Event):
-        e._json_data['issue_id'] = getattr(issue, 'issue_id')
+        e._json_data['issue_id'] = getattr(issue, 'issue_ext_id')
         data = e._json_data
         events.append(data)
     return events
@@ -51,7 +40,7 @@ def extract_transform_issue_events(issue):
 def etl_issue_events(issue, session):
     issue_events = extract_transform_issue_events(issue)
 
-    key = 'github_issue_event_{}'.format(issue.issue_id)
+    key = '{}_{}'.format(ISSUE_EVENTS_SCHEMA_NAME, issue.issue_ext_id)
 
     obj = gitsu.models.DataLake._query.get(key=key)
     if obj is None:
@@ -63,7 +52,7 @@ def etl_issue_events(issue, session):
             .exists_or_create(
                 _session=session,
                 key=key,
-                schema='github_issue_events',
+                schema=ISSUE_EVENTS_SCHEMA_NAME,
                 data=issue_events,
             )
         )     
