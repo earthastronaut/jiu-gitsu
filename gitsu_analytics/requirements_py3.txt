@@ -1,0 +1,3 @@
+PyYaml
+sqlalchemy
+psycopg2-binary

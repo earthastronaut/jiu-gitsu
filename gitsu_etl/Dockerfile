@@ -5,4 +5,6 @@ COPY . /opt/gitsu_etl
 
 ENV PYTHONPATH "${PYTHONPATH}:/opt/gitsu_etl"
 
-RUN pip install -r requirements_py3.py
+RUN pip install -U pip
+RUN pip install -r requirements_py3.txt
+RUN pip freeze | tee -a /opt/freeze_requirements_py3.txt

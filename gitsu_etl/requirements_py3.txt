@@ -1,0 +1,5 @@
+PyYaml
+ipython
+github3.py
+sqlalchemy
+psycopg2-binary
