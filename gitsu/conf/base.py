@@ -19,7 +19,7 @@ CONFIGURE_LOGGING = True # if False, logger will not be configured
 LOGGING_LEVEL = None  # debug, info, warning, error/exception, critical
 LOGGING_CONFIG = {  # used in logging.config.dictConfig(...)
     'version': 1,
-   # 'disable_existing_loggers': True,
+    'disable_existing_loggers': True,
     'formatters': {
         'default': {
             'format': (
@@ -38,14 +38,14 @@ LOGGING_CONFIG = {  # used in logging.config.dictConfig(...)
     },
     'root': {
         'handlers': ['console'],
-        'level': logging.DEBUG,
+        'level': logging.INFO,
     },  
     'loggers': {
         'github3.py': {
             'handlers': ['console'],
             'level': logging.DEBUG,
         }, 
-        'gitsu': {
+        'gitsu_analytics': {
             'handlers': ['console'],
             'level': logging.DEBUG,
         },
@@ -68,7 +68,7 @@ DATA_PATH = os.path.join(
 )
 
 RESOURCES_PATH = os.path.join(
-    PROJECT_PATH, 'resources'
+    MODULE_ROOT_PATH, 'resources'
 )
 
 # =========================================================================== #
