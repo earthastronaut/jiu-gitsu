@@ -4,11 +4,6 @@
 Implement a tool for running database migrations
 
 
-## Task-2 github external ids migration
-
-change github_user/issue/issue_event to use the external id as the primary key... This will make lookups between source much easier. Or maybe index unique? Update pipeline
-
-
 ## Task-3 implement airflow for etl
 
 update download_events:
