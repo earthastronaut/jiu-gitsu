@@ -1,11 +1,6 @@
 #!env python
-import os
 import logging
-
-import copy
-import json
 import github3
-import pandas as pd
 import gitsu
 import time
 
@@ -24,19 +19,20 @@ repo = (
 
 # create an issues iterator to access all the issues
 iter_issues = repo.issues(
-    #YYYY-MM-DDTHH:MM:SSZ    
-    #since='2018-05-01T00:00:00Z',
-    sort='updated',
+    # YYYY-MM-DDTHH:MM:SSZ
+    # since='2018-05-01T00:00:00Z',
+    sort='created',
     direction='desc',
     state='all',
 )
 iter_issues.params.update({
-    'page': 33,
+    'page': 1,
     'per_page': 300,
 })
 
 
 CREATED = []
+
 
 def callback(issue):
     global CREATED
@@ -54,7 +50,14 @@ def callback(issue):
     key = 'github_issue_{}'.format(data['id'])
     with gitsu.db_session_context() as sess:
         obj = None
-        created = not gitsu.models.DataLake._query.exists(session=sess, key=key)
+        created = (
+            not
+            gitsu
+            .models
+            .DataLake
+            ._query
+            .exists(_session=sess, key=key)
+        )
         if created:
             obj = gitsu.models.DataLake(
                 key=key, schema='github_issue', data=data,

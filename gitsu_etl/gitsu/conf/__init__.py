@@ -1,5 +1,4 @@
 import os
-import sys
 import yaml
 import logging
 import logging.config
@@ -22,7 +21,7 @@ def _update_relpaths(config, key_suffix='_PATH'):
     """ Updates PATH variables to be relative to server
 
     Note:
-      - MODULE_ROOT_PATH is implied if not overwritten. 
+      - MODULE_ROOT_PATH is implied if not overwritten.
         The implied value is os.path.dirname(__file__)
 
     Example:
@@ -39,7 +38,7 @@ def _update_relpaths(config, key_suffix='_PATH'):
 def _resolve_config_filepaths(config_files=None, config_path=None):
     """ Resolves which filepath to load config from
 
-    For each filename in config_files, look in the config_path 
+    For each filename in config_files, look in the config_path
     and locate the first.
 
     """
@@ -99,7 +98,7 @@ def _load_config(config_filepaths):
             config.update(yaml.load(f))
 
     _update_relpaths(config, '_PATH')
-    _update_relpaths(config, '_FILEPATH')    
+    _update_relpaths(config, '_FILEPATH')
     return config
 
 
@@ -124,7 +123,7 @@ class Settings:
     def _configure_logging(self):
         logging_config = getattr(self, 'LOGGING_CONFIG')
         if not logging_config:
-            return 
+            return
         if isinstance(logging_config, str):
             logging.basicConfig(filename=logging_config)
         else:

@@ -1,6 +1,5 @@
 #!env python
 import logging
-import time
 import gitsu
 
 

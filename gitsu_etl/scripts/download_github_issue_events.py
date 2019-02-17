@@ -1,17 +1,14 @@
 #!env python
-import os
 import logging
 import datetime
 import pytz
 import time
-import json
-import github3
 import gitsu
-import requests
 
 
 UPDATE_EVENTS_MIN = datetime.datetime.now(pytz.timezone('UTC')) - datetime.timedelta(days=7)
 ISSUE_EVENTS_SCHEMA_NAME = 'github_issue_event'
+
 
 class Event(gitsu.github.github3.models.GitHubCore):
     def __init__(self, json, session):
@@ -55,13 +52,12 @@ def etl_issue_events(issue, session):
                 schema=ISSUE_EVENTS_SCHEMA_NAME,
                 data=issue_events,
             )
-        )     
+        )
         logging.info('Issue events data stored for {}'.format(key))
     else:
         obj.data = issue_events
-        session.commit()   
+        session.commit()
         logging.info('Issue events data updated for {}'.format(key))
-
 
 
 Model = gitsu.models.GitHubIssue

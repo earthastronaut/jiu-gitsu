@@ -19,6 +19,7 @@ def etl_github_repo(repo):
         logging.info('Created REPO {}'.format(repo))
     return created
 
+
 iterrows = (
     gitsu
     .models
