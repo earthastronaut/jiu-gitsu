@@ -93,7 +93,7 @@ def db_session_context(db_connection_name='default', **kws):
         session.close()
 
 
-def structure_query_results(query_results, data_structure=None):
+def structure_query_results(query_results, data_structure='dataframe'):
     rows = query_results.fetchall()
     if len(rows) == 0:
         raise ValueError('no rows returned')
@@ -135,7 +135,7 @@ def db_execute(
         query, 
         db_connection_name='default',
         params=None, 
-        data_structure=None):
+        data_structure='dataframe'):
     """ For a particular database execute a query and return the result 
     as a pandas dataframe
 
