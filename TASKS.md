@@ -36,3 +36,12 @@ Remove all analytics components from gitsu-etl
 ## Task-5 create gitsu-web
 
 For API web access.
+
+## Task-6 abstract configuration files to share across gitsu_* files 
+
+
+## Task-7 settings config schema
+
+With the yaml config there's no guarentee of keys being present. How to provide that guarentee? 
+
+Also, misspellings are more difficult to debug. 
