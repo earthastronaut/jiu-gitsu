@@ -1,8 +1,8 @@
 import datetime
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
-from sqlalchemy import Table, Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.dialects.postgresql.json import JSONB
-from sqlalchemy import ForeignKey, exists, and_, or_
+from sqlalchemy import ForeignKey, exists, and_
 from sqlalchemy.orm import relationship
 
 from gitsu import database
@@ -52,7 +52,7 @@ class Query:
         obj = None
         if created:
             obj = self.model_cls(**kws)
-            _session.add(obj)        
+            _session.add(obj)
         return obj, created
 
     def filter_clause(self, **kws):
@@ -72,7 +72,7 @@ class Query:
             split_field_op = field_op.split('__')
             field = split_field_op[0]
 
-            if len(split_field_op) == 1:                
+            if len(split_field_op) == 1:
                 op = 'eq'
             elif len(split_field_op) == 2:
                 op = split_field_op[1]
@@ -138,7 +138,7 @@ class GitHubIssue(Base):
     issue_ext_id = Column(Integer, primary_key=True)   
     issue_state = Column(String)
     issue_comments = Column(Integer)
-    issue_events = relationship("GitHubIssueEvent", back_populates='event_issue')
+    issue_events = relationship("GitHubIssueEvent", back_populates='event_issue')  # noqa
     issue_created_at = Column(DateTime)
     issue_closed_at = Column(DateTime)
     issue_updated_at = Column(DateTime)
@@ -154,7 +154,7 @@ class GitHubIssue(Base):
 class GitHubIssueEvent(Base):
     __tablename__ = 'github_issue_event'
     event_ext_id = Column(Integer, primary_key=True)
-    event_issue_ext_id = Column(Integer, ForeignKey('github_issue.issue_ext_id'))
+    event_issue_ext_id = Column(Integer, ForeignKey('github_issue.issue_ext_id'))  # noqa
     event_issue = relationship("GitHubIssue", back_populates="issue_events")
     event_created_at = Column(DateTime)
     event_label = Column(String)
@@ -171,7 +171,7 @@ class DataLake(Base):
         key STRING PRIMARY KEY
         value JSON NULL
     )
-    """    
+    """
     __tablename__ = 'data_lake'
     key = Column(String, primary_key=True)
     schema = Column(String)

@@ -1,10 +1,9 @@
-import datetime 
+import datetime
 import logging
 from contextlib import contextmanager
 
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import exists
 
 from .conf import settings
 
@@ -16,8 +15,8 @@ def get_db_engine(db_connection_name='default'):
     """ Get an engine for a particular db_connection_name
 
     Engines are best at module level defined once per application. Unless
-    you're doing multiprocessing, then one per thread. This uses module 
-    level variable `ENGINES` as a cache. 
+    you're doing multiprocessing, then one per thread. This uses module
+    level variable `ENGINES` as a cache.
     (ref: http://docs.sqlalchemy.org/en/latest/core/connections.html)
 
     Args:
@@ -27,7 +26,7 @@ def get_db_engine(db_connection_name='default'):
         Engine: engine
 
     """
-    global ENGINES 
+    global ENGINES
     if db_connection_name not in ENGINES:
         ENGINES[db_connection_name] = create_db_engine(db_connection_name)
     return ENGINES[db_connection_name]
@@ -44,18 +43,18 @@ def create_db_engine(db_connection_name='default', **create_engine_kws):
     Notes:
         see http://docs.sqlalchemy.org/en/latest/core/connections.html
 
-    """  
+    """
     try:
         conn_kws = settings.DATABASES[db_connection_name]
     except KeyError:
         raise KeyError("database '{}' not one of {}".format(
             db_connection_name, tuple(settings.DATABASES.keys()),
         ))
-    
+
     engine_kws = conn_kws.pop('engine_kws', {})
     engine_kws.update(**create_engine_kws)
 
-    try:        
+    try:
         connection_pattern = (
             '{engine}://{username}:{password}@{host}:{port}/{database}'
         ).format(**conn_kws)
@@ -64,13 +63,13 @@ def create_db_engine(db_connection_name='default', **create_engine_kws):
             '{engine}://{filepath}'
         ).format(**conn_kws)
     engine = sqlalchemy.create_engine(connection_pattern, **engine_kws)
-    
+
     if conn_kws.get('read_only', False):
         @sqlalchemy.event.listens_for(engine, 'begin')
         def receive_begin(conn):
             conn.execute('SET TRANSACTION READ ONLY')
 
-    return engine 
+    return engine
 
 
 def db_session(db_connection_name='default', **kws):
@@ -97,13 +96,13 @@ def structure_query_results(query_results, data_structure='dataframe'):
     rows = query_results.fetchall()
     if len(rows) == 0:
         raise ValueError('no rows returned')
-    columns = query_results.keys()        
+    columns = query_results.keys()
 
     if data_structure is None:
         return rows, columns
 
     elif data_structure == 'dataframe':
-        import pandas as pd 
+        import pandas as pd
         return pd.DataFrame(rows, columns=columns)
 
     elif data_structure == 'recarray':
@@ -112,7 +111,7 @@ def structure_query_results(query_results, data_structure='dataframe'):
 
     elif data_structure == 'objects':
         return [dict(zip(columns, row)) for row in rows]
-        
+
     elif data_structure == 'dict':
         data = {}
         for col in columns:
@@ -121,7 +120,7 @@ def structure_query_results(query_results, data_structure='dataframe'):
         for row in rows:
             for i, el in enumerate(row):
                 data[columns[i]].append(el)
-        return data 
+        return data
 
     else:
         options = (None, 'dataframe', 'recarray', 'objects')
@@ -131,12 +130,12 @@ def structure_query_results(query_results, data_structure='dataframe'):
         )
 
 
-def db_execute(        
-        query, 
+def db_execute(
+        query,
         db_connection_name='default',
-        params=None, 
+        params=None,
         data_structure='dataframe'):
-    """ For a particular database execute a query and return the result 
+    """ For a particular database execute a query and return the result
     as a pandas dataframe
 
     Parameters
@@ -153,20 +152,19 @@ def db_execute(
 
     Notes:
         Async: note if you're applying asyncronosly, you should pass a new
-            connection into the db_connection_name not the string. 
+            connection into the db_connection_name not the string.
 
     """
     if isinstance(db_connection_name, sqlalchemy.engine.base.Engine):
         db = db_connection_name
     else:
         db = get_db_engine(db_connection_name)
-    
-    t0 = datetime.datetime.now()    
+
+    t0 = datetime.datetime.now()
     params = params or {}
     rs = db.execute(query, **params)
     data = structure_query_results(rs, data_structure)
-    dt = datetime.datetime.now() - t0    
+    dt = datetime.datetime.now() - t0
     logging.info("query returned {} rows in {}".format(len(data), dt))
 
     return data
-

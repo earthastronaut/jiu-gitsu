@@ -1,17 +1,17 @@
 from .conf import settings
 
 from .database import (
-	db_execute,
-	db_session,
-	db_session_context,
+    db_execute,
+    db_session,
+    db_session_context,
 )
 
 from .github import (
-	github_client,
+    github_client,
 )
 
 from .etl import (
-	map_async,
+    map_async,
 )
 
 
