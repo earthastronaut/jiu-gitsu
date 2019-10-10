@@ -3,10 +3,15 @@ import logging
 import github3
 import gitsu
 import time
+import pytz
+import dateutil.parser
 
+
+# TODO: parameterize these
+# TODO: SINCE==none should infer from the data
 ORG = 'WordPress'
 REPO = 'gutenberg'
-
+SINCE = '2000-01-01T00:00'
 
 # Get the Github repo object
 repo = (
@@ -21,8 +26,15 @@ repo = (
 iter_issues = repo.issues(
     # YYYY-MM-DDTHH:MM:SSZ
     # since='2018-05-01T00:00:00Z',
-    sort='created',
-    direction='desc',
+    since=(
+        dateutil
+        .parser
+        .parse(SINCE)
+        .replace(tzinfo=pytz.UTC)
+        .isoformat()
+    ),
+    sort='updated',
+    direction='asc',
     state='all',
 )
 iter_issues.params.update({
