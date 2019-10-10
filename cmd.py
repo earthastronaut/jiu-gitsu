@@ -11,6 +11,10 @@ import os
 import sys
 import argparse
 import logging
+import datetime
+
+
+PROJECT_DIR = os.path.dirname(__file__)
 
 
 # ########################################################################### #
@@ -274,6 +278,31 @@ db_script.add_argument(
     'filename',
     help='Filename of the script, can use path `postgresql/scripts/0000_init.psql`'
 )
+
+
+@as_subparser
+def db_backup():
+    """ Backup the database
+    """
+    path = 'postgresql/untracked_backups'
+
+    outdir_host = os.path.join(PROJECT_DIR, path)
+    if not os.path.isdir(outdir_host):
+        os.mkdir(outdir_host)
+    outdir = os.path.join('/opt', path)
+
+    # pgdump_2019-10-09T21:02:26.backup
+    now = datetime.datetime.now().isoformat().split('.')[0]
+    fn = f'pgdump_{now}.backup'
+
+    fp = os.path.join(outdir, fn)
+
+    psql_cmd = 'pg_dump -U $POSTGRES_USER -d $POSTGRES_DB > ' + fp
+    execute_bash_command(
+        'docker-compose', 'exec', 'db',
+        # note: need the single quotes to use environment variables
+        "bash -c '{}'".format(psql_cmd),
+    )
 
 
 # ########################################################################### #
