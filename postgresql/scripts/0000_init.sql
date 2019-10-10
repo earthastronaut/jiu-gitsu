@@ -32,7 +32,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx__github_repo__repo_name ON public.github_r
 
 /* Github User */
 CREATE TABLE IF NOT EXISTS public.github_user (
-	user_ext_id INTEGER PRIMARY KEY
+	user_ext_id BIGINT PRIMARY KEY
 	, user_name VARCHAR(64)
     , dw_row_created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     , dw_row_updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP	
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS public.github_user (
 
 /* Issue */
 CREATE TABLE IF NOT EXISTS public.github_issue (
-	issue_ext_id INTEGER PRIMARY KEY
+	issue_ext_id BIGINT PRIMARY KEY
     , issue_state VARCHAR(16) NOT NULL
     , issue_comments INTEGER DEFAULT 0
     , issue_created_at TIMESTAMP WITH TIME ZONE NOT NULL
@@ -65,7 +65,7 @@ CREATE INDEX IF NOT EXISTS
 
 
 CREATE TABLE IF NOT EXISTS public.github_issue_event (
-	event_ext_id INTEGER PRIMARY KEY
+	event_ext_id BIGINT PRIMARY KEY
 	, event VARCHAR(32)	
 	, event_issue_ext_id INTEGER REFERENCES public.github_issue(issue_ext_id)
 	, event_user_ext_id INTEGER REFERENCES public.github_user(user_ext_id)
