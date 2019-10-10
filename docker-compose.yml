@@ -16,9 +16,6 @@ services:
       # Comment these lines to persist data on the local filesystem.
       PGDATA: /opt/postgres/data
 
-
-#docker run -d -p 8080:8080 -v /path/to/dags/on/your/local/machine/:/usr/local/airflow/dags  puckel/docker-airflow webserver
-
   # Service for ETL
   gitsu_etl:
     build: ./gitsu_etl/.
@@ -49,3 +46,16 @@ services:
       JUPYTER_PASSWORD: 'abc123'    
       JUPYTER_ENABLE_LAB: 'yes'
       CONFIG_FILES: 'base.yaml:/opt/gitsu_root/local_settings.yaml'
+
+  # # Service for Analytics
+  # gitsu_web:
+  #   build: ./gitsu_web/.
+  #   volumes:
+  #     - ./gitsu_web/src:/go/src
+  #   command: watcher -run main
+  #   ports:
+  #     - 8080:8080
+  #   depends_on:
+  #     - db
+  #   links:
+  #     - db

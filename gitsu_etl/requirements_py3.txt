@@ -1,6 +1,15 @@
+# For timezones in python
 pytz
-PyYaml
-ipython
-github3.py
-sqlalchemy
+
+# For reading yaml files for configuration
+PyYAML
+
+# Connect to postgres
 psycopg2-binary
+SQLAlchemy
+
+# For connecting to github to fetch issues
+github3.py
+
+# For development
+ipython
