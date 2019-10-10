@@ -95,7 +95,7 @@ def _load_config(config_filepaths):
 
     for fp in config_filepaths:
         with open(fp) as f:
-            config.update(yaml.load(f))
+            config.update(yaml.safe_load(f))
 
     _update_relpaths(config, '_PATH')
     _update_relpaths(config, '_FILEPATH')
