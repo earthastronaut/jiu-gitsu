@@ -254,6 +254,7 @@ def psql():
         "bash -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'",
     )
 
+
 @as_subparser
 def db_script(filename):
     """ Connect to the database service using psql
@@ -267,8 +268,10 @@ def db_script(filename):
         # note: need the single quotes to use environment variables
         "bash -c '{}'".format(psql_cmd),
     )
+
+
 db_script.add_argument(
-    'filename', 
+    'filename',
     help='Filename of the script, can use path `postgresql/scripts/0000_init.psql`'
 )
 
