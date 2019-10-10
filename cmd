@@ -236,7 +236,7 @@ def add_cmd_to_path():
 def check_python_deps(service):
     """ This checks the python requirements against the locked version
     """
-    req_file = 'requirements_py3_lock.txt'
+    req_file = 'requirements_lock.txt'
     tmp_host = f'/tmp/{service}_pip_freeze.txt'
     execute_bash_command(
         f'docker-compose run {service} pip freeze > {tmp_host} '

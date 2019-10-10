@@ -10,8 +10,8 @@ ENV PYTHONPATH "${PYTHONPATH}:/opt/gitsu_etl"
 
 RUN pip install -U pip
 RUN \
- if [ "x$requirements_lock" = "true" ] ;\
- then pip install -r requirements_py3_locked.txt ;\
- else pip install -r requirements_py3.txt ;\
+ if [ "$requirements_lock" = "true" ] ;\
+ then pip install -r requirements_lock.txt ;\
+ else pip install -r requirements_txt ;\
  fi
-RUN pip freeze | tee -a /opt/freeze_requirements_py3.txt
+RUN pip freeze

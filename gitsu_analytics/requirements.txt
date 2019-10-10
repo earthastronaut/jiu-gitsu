@@ -1,0 +1,7 @@
+
+# For reading yaml files for configuration
+PyYaml
+
+# For connecting to postgres
+sqlalchemy
+psycopg2-binary
