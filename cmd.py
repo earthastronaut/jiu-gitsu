@@ -157,10 +157,10 @@ root_parser.add_argument(
 
 # --------------------------------------------------------------------------- #
 @as_subparser
-def add_dapi_command():
-    """ Add dapi command to your terminal
+def add_cmd_to_path():
+    """ Add cmd command to your terminal
 
-    dapi is a command to help you with common tasks. It can be excuted directly
+    cmd is a command to help you with common tasks. It can be excuted directly
     with `./dapi <shortcut>`. However, it is often more convient to shortent
     to `dapi <shortcut>` and make accessible in subfolders. There are several
     methods to achieve this though, including:
@@ -241,7 +241,9 @@ def add_dapi_command():
 def bash():
     """ This starts a bash shell on the web server
     """
-    execute_bash_command('docker-compose', 'run', 'web', 'bash')
+    execute_bash_command(
+        'docker-compose run web bash'
+    )
 
 # --------------------------------------------------------------------------- #
 #       Database Commands
@@ -253,7 +255,7 @@ def psql():
     """ Connect to the database service using psql
     """
     execute_bash_command(
-        'docker-compose', 'exec', 'db',
+        'docker-compose exec db',
         # note: need the single quotes to use environment variables
         "bash -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'",
     )
@@ -264,19 +266,20 @@ def db_script(filename):
     """ Connect to the database service using psql
     """
     fn = os.path.basename(filename)
-    fp = os.path.join('/opt/postgresql/scripts', fn)
-
-    psql_cmd = 'psql -U $POSTGRES_USER -d $POSTGRES_DB -f ' + fp
+    fp = os.path.join('/opt/postgres/scripts', fn)
     execute_bash_command(
-        'docker-compose', 'exec', 'db',
+        'docker-compose exec db',
         # note: need the single quotes to use environment variables
-        "bash -c '{}'".format(psql_cmd),
+        f"bash -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB -f {fp}'",
     )
 
 
 db_script.add_argument(
     'filename',
-    help='Filename of the script, can use path `postgresql/scripts/0000_init.psql`'
+    help=(
+        'Filename of the script, '
+        'can use path `postgres/scripts/0000_init.psql`'
+    )
 )
 
 
@@ -284,7 +287,7 @@ db_script.add_argument(
 def db_backup():
     """ Backup the database
     """
-    path = 'postgresql/untracked_backups'
+    path = 'postgres/untracked_backups'
 
     outdir_host = os.path.join(PROJECT_DIR, path)
     if not os.path.isdir(outdir_host):
@@ -297,11 +300,10 @@ def db_backup():
 
     fp = os.path.join(outdir, fn)
 
-    psql_cmd = 'pg_dump -U $POSTGRES_USER -d $POSTGRES_DB > ' + fp
     execute_bash_command(
-        'docker-compose', 'exec', 'db',
+        'docker-compose exec db',
         # note: need the single quotes to use environment variables
-        "bash -c '{}'".format(psql_cmd),
+        f"bash -c 'pg_dump -U $POSTGRES_USER -d $POSTGRES_DB > {fp}'"
     )
 
 

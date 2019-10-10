@@ -7,12 +7,17 @@ services:
     expose:
       - 5432
     volumes:
-      - ./postgresql/scripts:/opt/postgresql/scripts
+      - ./postgres:/opt/postgres
     environment:
       # TODO: change this password, currently checked into git
       POSTGRES_PASSWORD: A224697C73DDC7439E35E7272909246D0AB8E5BBE
       POSTGRES_USER: gitsu
       POSTGRES_DB: gitsu
+      # Comment these lines to persist data on the local filesystem.
+      PGDATA: /opt/postgres/data
+
+
+#docker run -d -p 8080:8080 -v /path/to/dags/on/your/local/machine/:/usr/local/airflow/dags  puckel/docker-airflow webserver
 
   # Service for ETL
   gitsu_etl:
