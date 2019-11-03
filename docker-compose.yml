@@ -16,30 +16,30 @@ services:
       # Comment these lines to persist data on the local filesystem.
       PGDATA: /opt/postgres/data
 
-  # Service for ETL
+  # Service for ETL using Airflow
   gitsu_etl:
-    build: ./gitsu_etl/.
+    build: 
+      context: ./gitsu_etl/. 
+      dockerfile: Dockerfile-dev
     volumes:
       - ./gitsu_etl:/opt/gitsu_etl
       - ./:/opt/gitsu_root
     depends_on:
-      - db
-    links:
       - db
     environment:
       CONFIG_FILES: 'base.yaml:/opt/gitsu_root/local_settings.yaml'
 
   # Service for Analytics
   gitsu_analytics:
-    build: ./gitsu_analytics/.
+    build: 
+      context: ./gitsu_analytics/. 
+      dockerfile: Dockerfile-dev
     volumes:
       - ./gitsu_analytics:/opt/gitsu_analytics
       - ./:/opt/gitsu_root
     ports:
       - 8888:8888
     depends_on:
-      - db
-    links:
       - db
     environment:
       JUPYTER_CONFIG_DIR: '/opt/gitsu_analytics/'       
