@@ -231,24 +231,6 @@ def add_cmd_to_path():
         )
     )
 
-
-@as_subparser
-def check_python_deps(service):
-    """ This checks the python requirements against the locked version
-    """
-    req_file = 'requirements_lock.txt'
-    tmp_host = f'/tmp/{service}_pip_freeze.txt'
-    execute_bash_command(
-        f'docker-compose run {service} pip freeze > {tmp_host} '
-    )
-    execute_bash_command(
-        f'diff {tmp_host} ./{service}/{req_file}'
-    )
-
-
-check_python_deps.add_argument('service')
-
-
 # --------------------------------------------------------------------------- #
 #       Web Commands
 # --------------------------------------------------------------------------- #
