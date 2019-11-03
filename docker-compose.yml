@@ -19,7 +19,7 @@ services:
   # Service for ETL using Airflow
   gitsu_etl:
     build: 
-      context: ./gitsu_etl/. 
+      context: gitsu_etl/.
       dockerfile: Dockerfile-dev
     volumes:
       - ./gitsu_etl:/opt/gitsu_etl
@@ -32,7 +32,7 @@ services:
   # Service for Analytics
   gitsu_analytics:
     build: 
-      context: ./gitsu_analytics/. 
+      context: gitsu_analytics/. 
       dockerfile: Dockerfile-dev
     volumes:
       - ./gitsu_analytics:/opt/gitsu_analytics
