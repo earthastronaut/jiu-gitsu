@@ -1,4 +1,4 @@
-version: '3.1'
+version: '3.3'
 
 services:
 
@@ -20,14 +20,56 @@ services:
   gitsu_etl:
     build: 
       context: gitsu_etl/.
-      dockerfile: Dockerfile-dev
+      args:
+        SERVICE_ENVIRONMENT: dev # stage, prod
     volumes:
+      # TODO: where to put dags
+      - ./gitsu_etl/dags:/usr/local/airflow/dags      
       - ./gitsu_etl:/opt/gitsu_etl
       - ./:/opt/gitsu_root
     depends_on:
       - db
+      - airflow-postgres
     environment:
       CONFIG_FILES: 'base.yaml:/opt/gitsu_root/local_settings.yaml'
+      
+      # Airflow
+      LOAD_EX: n 
+      #FERNET_KEY: 46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+
+      POSTGRES_USER: "${AIRFLOW_POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${AIRFLOW_POSTGRES_PASSWORD}"
+      POSTGRES_HOST: airflow-postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: "${AIRFLOW_POSTGRES_DB}"
+      
+      # AIRFLOW__CORE__REMOTE_LOGGING: True
+      # AIRFLOW__CORE__LOG_FILENAME_TEMPLATE: {{ ti.dag_id }}.lo
+      AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 120 # Prevent airflow from reloading the dags all the time and set. This is the main setting that reduces CPU load in the scheduler
+      AIRFLOW__SCHEDULER__SCHEDULER_MAX_THREADS: 1 # This should be set to (CPU Cores - 1)            
+
+    ports:
+        - "8080:8080"
+    command: webserver
+    healthcheck:
+        test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+        interval: 30s
+        timeout: 30s
+        retries: 3
+    networks:
+      - airflow
+
+  airflow-postgres:
+      image: postgres:9.6
+      expose:
+          - 5432
+      environment:
+          POSTGRES_USER: "${AIRFLOW_POSTGRES_USER}"
+          POSTGRES_PASSWORD: "${AIRFLOW_POSTGRES_PASSWORD}"
+          POSTGRES_DB: "${AIRFLOW_POSTGRES_DB}"
+      networks:
+        - airflow
 
   # Service for Analytics
   gitsu_analytics:
@@ -59,3 +101,7 @@ services:
   #     - db
   #   links:
   #     - db
+
+networks:
+  airflow:
+    driver: bridge

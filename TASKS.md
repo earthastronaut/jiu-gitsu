@@ -1,9 +1,4 @@
 
-
-## Task-1 db migrations
-Implement a tool for running database migrations
-
-
 ## Task-3 implement airflow for etl
 
 update download_events:
@@ -48,4 +43,10 @@ However, I also want to freeze a version and track it in github. The flow I want
 1. optional build with specific pip freeze...
 
 
-## Task-9
+## Task-9 db migrations
+
+Implement a tool for running database migrations
+db-migrate service using [liquidbase](https://github.com/kilna/liquibase-docker)
+
+only do this once it's needed
+
