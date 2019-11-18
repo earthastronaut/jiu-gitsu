@@ -4,8 +4,8 @@ untracked_*
 
 
 # jupyter
-gitsu_analytics/lab
-gitsu_analytics/migrated
+analytics/lab
+analytics/migrated
 
 # sublimetext
 *.sublime-workspace

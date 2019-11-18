@@ -43,7 +43,7 @@ services:
       POSTGRES_HOST: airflow-postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: "${AIRFLOW_POSTGRES_DB}"
-      
+
       # AIRFLOW__CORE__REMOTE_LOGGING: True
       # AIRFLOW__CORE__LOG_FILENAME_TEMPLATE: {{ ti.dag_id }}.lo
       AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 120 # Prevent airflow from reloading the dags all the time and set. This is the main setting that reduces CPU load in the scheduler
@@ -72,19 +72,19 @@ services:
         - airflow
 
   # Service for Analytics
-  gitsu_analytics:
+  analytics:
     build: 
-      context: gitsu_analytics/. 
+      context: analytics/. 
       dockerfile: Dockerfile-dev
     volumes:
-      - ./gitsu_analytics:/opt/gitsu_analytics
+      - ./analytics:/opt/analytics
       - ./:/opt/gitsu_root
     ports:
       - 8888:8888
     depends_on:
       - db
     environment:
-      JUPYTER_CONFIG_DIR: '/opt/gitsu_analytics/'       
+      JUPYTER_CONFIG_DIR: '/opt/analytics/'       
       JUPYTER_PASSWORD: 'abc123'    
       JUPYTER_ENABLE_LAB: 'yes'
       CONFIG_FILES: 'base.yaml:/opt/gitsu_root/local_settings.yaml'

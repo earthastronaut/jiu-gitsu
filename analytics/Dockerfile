@@ -1,9 +1,9 @@
 # https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-datascience-notebook
 FROM jupyter/scipy-notebook:latest
 
-ENV PYTHONPATH "${PYTHONPATH}:/opt/gitsu_analytics"
+ENV PYTHONPATH "${PYTHONPATH}:/opt/analytics"
 
-WORKDIR /opt/gitsu_analytics
+WORKDIR /opt/analytics
 
 # Juptyer Extensions
 RUN jupyter labextension install @jupyterlab/toc
