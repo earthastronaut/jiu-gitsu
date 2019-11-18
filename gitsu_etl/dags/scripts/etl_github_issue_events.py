@@ -72,7 +72,7 @@ def etl_issue_events(dl_events):
         )
 
 
-if __name__ == '__main__':
+def main(**context):
     iterrows = (
         gitsu
         .models
@@ -88,3 +88,7 @@ if __name__ == '__main__':
         iterrows,
         chunksize=10,
     )
+
+
+if __name__ == '__main__':
+    main()

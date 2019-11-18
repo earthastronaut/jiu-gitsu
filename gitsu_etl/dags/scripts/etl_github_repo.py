@@ -20,21 +20,26 @@ def etl_github_repo(repo):
     return created
 
 
-iterrows = (
-    gitsu
-    .models
-    .DataLake
-    ._query
-    .filter(
-        schema='github_issue',
-        dw_etl_at__is=None,
+def main(**context):
+    iterrows = (
+        gitsu
+        .models
+        .DataLake
+        ._query
+        .filter(
+            schema='github_issue',
+            dw_etl_at__is=None,
+        )
+        .all()
     )
-    .all()
-)
 
-repos = []
-for dl_issue in iterrows:
-    repo = dl_issue.data['repo']
-    if repo not in repos:
-        etl_github_repo(repo)
-        repos.append(repo)
+    repos = []
+    for dl_issue in iterrows:
+        repo = dl_issue.data['repo']
+        if repo not in repos:
+            etl_github_repo(repo)
+            repos.append(repo)
+
+
+if __name__ == '__main__':
+    main()

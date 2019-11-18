@@ -20,6 +20,16 @@ Data Pipeline
 1. etl_github_issues.py
 
 
+## Task-4 watched repos
+
+Create a table for watched_repos which includes
+the repo and organization names and a boolean for whether watch is enabled.
+
+Then update download_github_issues.main to pull from this table.
+
+Possibly remove this etl_github_repo step
+
+
 ## Task-5 create gitsu-web
 
 For API web access.
@@ -27,14 +37,14 @@ For API web access.
 
 ## Task-7 settings config schema
 
-With the yaml config there's no guarentee of keys being present. How to provide that guarentee? 
+With the yaml config there's no guarentee of keys being present. How to provide that guarentee?
 
-Also, misspellings are more difficult to debug. 
+Also, misspellings are more difficult to debug.
 
 ## Task-8 pip freeze on build
 
 I want the python requirements files to be flexible so when you do a fresh
-build it tries the latest-and-greatest. 
+build it tries the latest-and-greatest.
 
 However, I also want to freeze a version and track it in github. The flow I want:
 

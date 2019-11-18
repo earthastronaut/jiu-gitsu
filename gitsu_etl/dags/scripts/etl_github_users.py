@@ -65,7 +65,11 @@ def etl_users_from_issue_events():
         etl_user(user_data)
 
 
-if __name__ == '__main__':
+def main(**context):
     logging.info('Starting GitHub Users ELT')
     etl_users_from_issues()
     etl_users_from_issue_events()
+
+
+if __name__ == '__main__':
+    main()

@@ -79,7 +79,7 @@ RUN if [ "${SERVICE_ENVIRONMENT}" = "dev" ]; then \
 	&& pip freeze > /tmp/updated_requirements_freeze.txt \
 	&& diff --strip-trailing-cr /tmp/updated_requirements_freeze.txt requirements_freeze.txt \
 	; fi
-	
+
 # IF SERVICE_ENVIRONMENT = 'stage' or 'prod'
 RUN if [ "${SERVICE_ENVIRONMENT}" != "dev" ]; then \
 	pip install -r requirements_freeze.txt \

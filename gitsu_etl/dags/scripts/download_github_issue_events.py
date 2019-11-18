@@ -6,9 +6,6 @@ import time
 import gitsu
 
 
-UPDATE_EVENTS_MIN = (
-    datetime.datetime.now(pytz.timezone('UTC')) - datetime.timedelta(days=7)
-)
 ISSUE_EVENTS_SCHEMA_NAME = 'github_issue_event'
 
 
@@ -62,29 +59,40 @@ def etl_issue_events(issue, session):
         logging.info('Issue events data updated for {}'.format(key))
 
 
-Model = gitsu.models.GitHubIssue
-filter_clause = Model._query.filter_clause
-
-clause = (
-    filter_clause(
-        issue_events_last_loaded_at__lt=UPDATE_EVENTS_MIN,
-    )
-    | filter_clause(
-        issue_events_last_loaded_at__is=None,
-    )
-)
-with gitsu.db_session_context() as session:
-    iterrows = session.query(Model).filter(clause).order_by(Model.issue_updated_at.desc())  # noqa
-    n = iterrows.count()
-    for i, issue in enumerate(iterrows):
-        etl_issue_events(issue, session)
-        issue.issue_events_last_loaded_at = (
+def main(update_events_min=None, **context):
+    if update_events_min is None:
+        update_events_min = (
             datetime.datetime.now(pytz.timezone('UTC'))
+            - datetime.timedelta(days=7)
         )
-        session.commit()
 
-        logging.info('Updated issue {}/{} ({:.3%}) {}'.format(i, n, i / n, issue.issue_updated_at))  # noqa
-        logging.info('Github Rate Limit {}'.format(gitsu.github_client.ratelimit_remaining))  # noqa
-        if gitsu.github_client.ratelimit_remaining < 10:
-            logging.info('Rate Limit Reached, waiting 1 hour')
-            time.sleep(3600.0 + 1.0)
+    Model = gitsu.models.GitHubIssue
+    filter_clause = Model._query.filter_clause
+
+    clause = (
+        filter_clause(
+            issue_events_last_loaded_at__lt=update_events_min,
+        )
+        | filter_clause(
+            issue_events_last_loaded_at__is=None,
+        )
+    )
+    with gitsu.db_session_context() as session:
+        iterrows = session.query(Model).filter(clause).order_by(Model.issue_updated_at.desc())  # noqa
+        n = iterrows.count()
+        for i, issue in enumerate(iterrows):
+            etl_issue_events(issue, session)
+            issue.issue_events_last_loaded_at = (
+                datetime.datetime.now(pytz.timezone('UTC'))
+            )
+            session.commit()
+
+            logging.info('Updated issue {}/{} ({:.3%}) {}'.format(i, n, i / n, issue.issue_updated_at))  # noqa
+            logging.info('Github Rate Limit {}'.format(gitsu.github_client.ratelimit_remaining))  # noqa
+            if gitsu.github_client.ratelimit_remaining < 10:
+                logging.info('Rate Limit Reached, waiting 1 hour')
+                time.sleep(3600.0 + 1.0)
+
+
+if __name__ == '__main__':
+    main()
