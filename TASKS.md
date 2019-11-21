@@ -20,6 +20,12 @@ Data Pipeline
 1. etl_github_issues.py
 
 
+## Task-10 Logging aggregation
+
+can I collect logs from all the services into one location? 
+
+Create a logging service (ha) probably using http://littlebigextra.com/how-to-collect-logs-from-multiple-containers-in-docker-swarm/ and the ELK stack to view logs in elastic search
+
 ## Task-4 watched repos
 
 Create a table for watched_repos which includes
