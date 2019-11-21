@@ -1,31 +1,31 @@
 # https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-datascience-notebook
-FROM jupyter/scipy-notebook:latest
+FROM jupyter/scipy-notebook:ad3574d3c5c7
 
-ENV PYTHONPATH "${PYTHONPATH}:/opt/analytics"
+# https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-datascience-notebook
+FROM jupyter/scipy-notebook:latest
 
 WORKDIR /opt/analytics
 
-# Juptyer Extensions
-RUN jupyter labextension install @jupyterlab/toc
-# RUN jupyter labextension install jupyterlab-drawio
+ENV PYTHONPATH "${PYTHONPATH}:/opt/analytics"
 
 # Python Requirements
+RUN pip install -U pip setuptools wheel
+
+# Install dev
 COPY requirements.txt .
-
-# Add library to PYTHONPATH
-RUN pip install -U pip
-
-# # IF service_environment = 'dev'
 # RUN pip install -r requirements.txt
 
+# Install prod
 COPY requirements_freeze.txt .
-# RUN pip freeze
-# RUN pip freeze > /tmp/updated_requirements_freeze.txt
-# RUN diff --strip-trailing-cr \
-# 	/tmp/updated_requirements_freeze.txt requirements_freeze.txt
-
-# IF service_environment = 'dev' or 'stage'
 RUN pip install -r requirements_freeze.txt
+
+# Check pip requirements for updates
+RUN pip freeze 
+RUN pip freeze > /tmp/updated_requirements_freeze.txt
+RUN diff --strip-trailing-cr /tmp/updated_requirements_freeze.txt requirements_freeze.txt 
+
+# Juptyer Extensions
+RUN jupyter labextension install --debug @jupyterlab/toc
 
 # Notebooks Entry Directory
 COPY . .

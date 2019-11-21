@@ -74,8 +74,8 @@ services:
   # Service for Analytics
   analytics:
     build: 
-      context: analytics/. 
-      dockerfile: Dockerfile-dev
+      context: analytics/.
+      dockerfile: Dockerfile-dev 
     volumes:
       - ./analytics:/opt/analytics
       - ./:/opt/gitsu_root

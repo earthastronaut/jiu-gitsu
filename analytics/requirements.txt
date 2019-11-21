@@ -5,3 +5,6 @@ PyYaml
 # For connecting to postgres
 sqlalchemy
 psycopg2-binary
+
+# For notebook extensions
+jupyter_contrib_nbextensions
