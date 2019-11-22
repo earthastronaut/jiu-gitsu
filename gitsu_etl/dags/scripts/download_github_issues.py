@@ -123,4 +123,6 @@ def main(organization_repo=None, since=None, **context):
 
 
 if __name__ == '__main__':
-    main()
+    main(
+        since='2019-11-01T00:00'
+    )
