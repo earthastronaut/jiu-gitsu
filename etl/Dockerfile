@@ -53,9 +53,9 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
-WORKDIR /opt/gitsu_etl
+WORKDIR /opt/etl
 
-ENV PYTHONPATH /opt/gitsu_etl
+ENV PYTHONPATH /opt/etl
 
 
 WORKDIR ${AIRFLOW_USER_HOME}

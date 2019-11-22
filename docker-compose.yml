@@ -17,21 +17,21 @@ services:
       PGDATA: /opt/postgres/data
 
   # Service for ETL using Airflow
-  gitsu_etl:
+  etl:
     build: 
-      context: gitsu_etl/.
+      context: etl/.
       args:
         SERVICE_ENVIRONMENT: dev # stage, prod
     volumes:
       # TODO: where to put dags
-      - ./gitsu_etl/dags:/usr/local/airflow/dags      
-      - ./gitsu_etl:/opt/gitsu_etl
-      - ./:/opt/gitsu_root
+      - ./etl/dags:/usr/local/airflow/dags      
+      - ./etl:/opt/etl
+      - ./:/opt/jiu_gitsu_root
     depends_on:
       - db
       - airflow-postgres
     environment:
-      CONFIG_FILES: 'base.yaml:/opt/gitsu_root/local_settings.yaml'
+      CONFIG_FILES: 'base.yaml:/opt/jiu_gitsu_root/local_settings.yaml'
       
       # Airflow
       LOAD_EX: n 
