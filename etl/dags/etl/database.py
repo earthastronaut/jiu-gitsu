@@ -5,7 +5,7 @@ from contextlib import contextmanager
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 
-from gitsu.conf import settings
+from etl.conf import settings
 
 
 ENGINES = {}

@@ -5,7 +5,7 @@ import json
 
 import github3
 
-from gitsu.conf import settings
+from etl.conf import settings
 
 
 github_client = (

@@ -34,8 +34,7 @@ LOGGING_CONFIG:
 # --------------------------------------------------------------------------- #
 
 # MODULE_ROOT_PATH implicit os.path.dirname(file)
-PROJECT_PATH: '{MODULE_ROOT_PATH}/..'
-SCRIPTS_PATH: '{MODULE_ROOT_PATH}/../scripts'
+PROJECT_PATH: '{MODULE_ROOT_PATH}/../..'
 
 # --------------------------------------------------------------------------- #
 # Databases

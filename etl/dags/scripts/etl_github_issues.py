@@ -4,14 +4,14 @@ import datetime
 import pytz
 import logging
 
-import gitsu
+import etl
 
 
 def etl_issue(dl_issue, session, create_only=True):
     data = dl_issue.data
 
     objs = list(
-        gitsu
+        etl
         .models
         .GitHubIssue
         ._query
@@ -23,7 +23,7 @@ def etl_issue(dl_issue, session, create_only=True):
     )
     if len(objs) == 0:
         created = True
-        obj = gitsu.models.GitHubIssue(
+        obj = etl.models.GitHubIssue(
             issue_ext_id=data['id'],
         )
         logging.info('Creating issue {}'.format(data['id']))
@@ -56,7 +56,7 @@ def etl_issue(dl_issue, session, create_only=True):
 def main(**context):
     # UPDATE data_lake SET dw_etl_at = NULL WHERE dw_etl_at IS NOT NULL;
     iterrows = (
-        gitsu
+        etl
         .models
         .DataLake
         ._query

@@ -2,7 +2,8 @@
 import logging
 import datetime
 import pytz
-import gitsu
+
+import etl
 
 
 def etl_event(event, sess):
@@ -11,7 +12,7 @@ def etl_event(event, sess):
     event_ext_id = event['id']
 
     obj = (
-        gitsu
+        etl
         .models
         .GitHubIssueEvent
         ._query
@@ -23,7 +24,7 @@ def etl_event(event, sess):
     if obj is not None:
         return False
     obj = (
-        gitsu
+        etl
         .models
         .GitHubIssueEvent(
             event_ext_id=event_ext_id,
@@ -49,16 +50,16 @@ def etl_issue_events(dl_events):
         logging.info('no events')
     elif isinstance(data, list):
         logging.info('ETL events')
-        with gitsu.db_session_context() as sess:
+        with etl.db_session_context() as sess:
             for event in data:
                 etl_event(event, sess)
     else:
         raise Exception('unknown event type {}'.format(type(data)))
 
-    with gitsu.db_session_context() as sess:
+    with etl.db_session_context() as sess:
         logging.info('update dw_etl_at')
         (
-            gitsu
+            etl
             .models
             .DataLake
             ._query
@@ -74,7 +75,7 @@ def etl_issue_events(dl_events):
 
 def main(**context):
     iterrows = (
-        gitsu
+        etl
         .models
         .DataLake
         ._query
@@ -83,7 +84,7 @@ def main(**context):
             dw_etl_at__is=None,
         )
     )
-    gitsu.etl.map_async(
+    etl.etl.map_async(
         etl_issue_events,
         iterrows,
         chunksize=10,

@@ -1,10 +1,11 @@
 #!env python
 import logging
 import github3
-import gitsu
 import time
 import pytz
 import dateutil.parser
+
+import etl
 
 
 class GithubIssuesCallback:
@@ -26,18 +27,18 @@ class GithubIssuesCallback:
         }
 
         key = 'github_issue_{}'.format(data['id'])
-        with gitsu.db_session_context() as sess:
+        with etl.db_session_context() as sess:
             obj = None
             created = (
                 not
-                gitsu
+                etl
                 .models
                 .DataLake
                 ._query
                 .exists(_session=sess, key=key)
             )
             if created:
-                obj = gitsu.models.DataLake(
+                obj = etl.models.DataLake(
                     key=key, schema='github_issue', data=data,
                 )
                 sess.add(obj)
@@ -55,7 +56,7 @@ class GithubIssuesCallback:
         if n > 1 and s == 0:
             raise Exception('stop!')
         self.created = []
-        gitsu.github.github_default_new_page_callback(iterator, item)
+        etl.github.github_default_new_page_callback(iterator, item)
 
 
 def download_github_issues_for_repo(repo, organization, since=None):
@@ -74,7 +75,7 @@ def download_github_issues_for_repo(repo, organization, since=None):
     repo = (
         github3
         .login(
-            token=gitsu.settings.GITHUB_TOKEN,
+            token=etl.settings.GITHUB_TOKEN,
         )
         .repository(organization, repo)
     )
@@ -98,7 +99,7 @@ def download_github_issues_for_repo(repo, organization, since=None):
         organization=organization,
     )
 
-    issues = gitsu.github.github_iterator_results(
+    issues = etl.github.github_iterator_results(
         iter_issues,
         callback=c.callback,
         new_page_callback=c.new_page_callback,

@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql.json import JSONB
 from sqlalchemy import ForeignKey, exists, and_
 from sqlalchemy.orm import relationship
 
-from gitsu import database
+from etl import database
 
 
 def with_default_session(func):
@@ -114,7 +114,7 @@ class GitHubUser(Base):
         user_id INTEGER PRIMARY KEY
         , user_login VARCHAR(64)
     );
-    """    
+    """
     __tablename__ = 'github_user'
     user_ext_id = Column(Integer, primary_key=True)
     user_name = Column(String)
@@ -135,7 +135,7 @@ class GitHubRepo(Base):
 
 class GitHubIssue(Base):
     __tablename__ = 'github_issue'
-    issue_ext_id = Column(Integer, primary_key=True)   
+    issue_ext_id = Column(Integer, primary_key=True)
     issue_state = Column(String)
     issue_comments = Column(Integer)
     issue_events = relationship("GitHubIssueEvent", back_populates='event_issue')  # noqa

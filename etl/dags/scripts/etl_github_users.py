@@ -1,11 +1,12 @@
 #!env python
 import logging
-import gitsu
+
+import etl
 
 
 def etl_user(user_data):
     obj, created = (
-        gitsu
+        etl
         .models
         .GitHubUser
         ._query
@@ -22,7 +23,7 @@ def etl_user(user_data):
 def etl_users_from_issues():
     logging.info('Starting Github Users ETL based on issues')
     iterrows = (
-        gitsu
+        etl
         .models
         .DataLake
         ._query
@@ -44,7 +45,7 @@ def etl_users_from_issues():
 def etl_users_from_issue_events():
     logging.info('Starting Github Users ETL based on issue events')
     iterrows = (
-        gitsu
+        etl
         .models
         .DataLake
         ._query

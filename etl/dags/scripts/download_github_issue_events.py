@@ -3,13 +3,14 @@ import logging
 import datetime
 import pytz
 import time
-import gitsu
+
+import etl
 
 
 ISSUE_EVENTS_SCHEMA_NAME = 'github_issue_event'
 
 
-class Event(gitsu.github.github3.models.GitHubCore):
+class Event(etl.github.github3.models.GitHubCore):
     def __init__(self, json, session):
         """Initialize our basic object.
 
@@ -26,7 +27,7 @@ def extract_transform_issue_events(issue):
     url = issue.issue_events_url
     logging.info('fetch data from \'{}\''.format(url))
     events = []
-    for e in gitsu.github_client._iter(-1, url, Event):
+    for e in etl.github_client._iter(-1, url, Event):
         e._json_data['issue_id'] = getattr(issue, 'issue_ext_id')
         data = e._json_data
         events.append(data)
@@ -38,10 +39,10 @@ def etl_issue_events(issue, session):
 
     key = '{}_{}'.format(ISSUE_EVENTS_SCHEMA_NAME, issue.issue_ext_id)
 
-    obj = gitsu.models.DataLake._query.get(key=key)
+    obj = etl.models.DataLake._query.get(key=key)
     if obj is None:
         (
-            gitsu
+            etl
             .models
             .DataLake
             ._query
@@ -66,7 +67,7 @@ def main(update_events_min=None, **context):
             - datetime.timedelta(days=7)
         )
 
-    Model = gitsu.models.GitHubIssue
+    Model = etl.models.GitHubIssue
     filter_clause = Model._query.filter_clause
 
     clause = (
@@ -77,7 +78,7 @@ def main(update_events_min=None, **context):
             issue_events_last_loaded_at__is=None,
         )
     )
-    with gitsu.db_session_context() as session:
+    with etl.db_session_context() as session:
         iterrows = session.query(Model).filter(clause).order_by(Model.issue_updated_at.desc())  # noqa
         n = iterrows.count()
         for i, issue in enumerate(iterrows):
@@ -88,8 +89,8 @@ def main(update_events_min=None, **context):
             session.commit()
 
             logging.info('Updated issue {}/{} ({:.3%}) {}'.format(i, n, i / n, issue.issue_updated_at))  # noqa
-            logging.info('Github Rate Limit {}'.format(gitsu.github_client.ratelimit_remaining))  # noqa
-            if gitsu.github_client.ratelimit_remaining < 10:
+            logging.info('Github Rate Limit {}'.format(etl.github_client.ratelimit_remaining))  # noqa
+            if etl.github_client.ratelimit_remaining < 10:
                 logging.info('Rate Limit Reached, waiting 1 hour')
                 time.sleep(3600.0 + 1.0)
 

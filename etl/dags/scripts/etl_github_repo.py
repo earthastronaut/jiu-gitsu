@@ -1,11 +1,12 @@
 #!env python
 import logging
-import gitsu
+
+import etl
 
 
 def etl_github_repo(repo):
     obj, created = (
-        gitsu
+        etl
         .models
         .GitHubRepo
         ._query
@@ -22,7 +23,7 @@ def etl_github_repo(repo):
 
 def main(**context):
     iterrows = (
-        gitsu
+        etl
         .models
         .DataLake
         ._query

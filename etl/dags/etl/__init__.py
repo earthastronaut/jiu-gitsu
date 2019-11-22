@@ -15,4 +15,6 @@ from .etl import (
 )
 
 
-import gitsu.models
+from . import (
+    models
+)
