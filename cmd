@@ -12,9 +12,10 @@ import sys
 import argparse
 import logging
 import datetime
+from glob import glob
 
 
-PROJECT_DIR = os.path.dirname(__file__)
+PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 # ########################################################################### #
@@ -225,7 +226,7 @@ def add_cmd_to_path():
     logging.info('Link created, remove with `rm {}`'.format(symlink))
     logging.info(
         'You can now use `{}` command anywhere '
-        'as long as you\'re in the {} virtualenv'
+        'as long as you are in the {} virtualenv'
         .format(
             command, venv,
         )
@@ -236,6 +237,8 @@ def add_cmd_to_path():
 # --------------------------------------------------------------------------- #
 
 # --------------------------------------------------------------------------- #
+
+
 @as_subparser
 def bash():
     """ This starts a bash shell on the web server
@@ -249,6 +252,8 @@ def bash():
 # --------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------
+
+
 @as_subparser
 def psql():
     """ Connect to the database service using psql
@@ -306,10 +311,78 @@ def db_backup():
     )
 
 
+@as_subparser
+def db_restore(filename, **kws):
+    """ Restore the database
+    https://www.postgresql.org/docs/current/app-pgrestore.html
+
+    """
+    path = 'postgres/untracked_backups'
+    print(PROJECT_DIR)
+    indir_host = os.path.join(PROJECT_DIR, path)
+    if not os.path.isdir(indir_host):
+        raise IOError(f'No directory {indir_host}')
+    indir = os.path.join('/opt', path)
+
+    filenames = [
+        os.path.basename(fn)
+        for fn in glob(indir_host + '/pgdump*.backup')
+    ]
+    if filename not in filenames:
+        raise IOError(f'filename "{filename}" not in {indir}/{filenames}')
+
+    filepath = os.path.join(indir, filename)
+
+    flags = []
+    if kws['data_only']:
+        flags.append('--data-only')
+    if kws['clean']:
+        flags.append('--clean')
+    if kws['verbose']:
+        flags.append('--verbose')
+
+    cmd = (
+        ""
+        + f"bash -c 'pg_restore -U $POSTGRES_USER "
+        + " ".join(flags)
+        + f" --file={filepath} '"
+    )
+    execute_bash_command('docker-compose run db', cmd)
+
+
+db_restore.add_argument(
+    'filename',
+    help=(
+        'Filename of the backup script to restor, '
+        'can use path `postgres/untracked_backups/0000_init.psql`'
+    )
+)
+db_restore.add_argument(
+    '--data-only',
+    action='store_false',
+    help=""" Restore only the data, not the schema (data definitions).
+    Table data, large objects, and sequence values are restored, if present
+    in the archive. This option is similar to, but for historical reasons not
+    identical to, specifying --section=data.
+    """
+)
+db_restore.add_argument(
+    '--clean',
+    action='store_true',
+    help="""Clean (drop) database objects before recreating them. (Unless
+    --if-exists is used, this might generate some harmless error messages,
+    if any objects were not present in the destination database.)
+    """
+)
+db_restore.add_argument(
+    '--verbose',
+    action='store_true',
+    help="""verbose on"""
+)
+
 # ########################################################################### #
 # MAIN
 # ########################################################################### #
-
 if __name__ == '__main__':
     pargs = parse_args(root_parser)
     process_global_arguments(pargs)
