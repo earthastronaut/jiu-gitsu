@@ -1,4 +1,8 @@
-version: '3.3'
+version: '3.7'
+
+volumes:
+  data-db:
+  data-airflow-postgres:
 
 services:
 
@@ -8,86 +12,78 @@ services:
       - 5432
     volumes:
       - ./postgres:/opt/postgres
+      - data-db:/var/lib/postgresql/data
     environment:
       # TODO: change this password, currently checked into git
       POSTGRES_PASSWORD: A224697C73DDC7439E35E7272909246D0AB8E5BBE
       POSTGRES_USER: gitsu
       POSTGRES_DB: gitsu
-      # Comment these lines to persist data on the local filesystem.
-      PGDATA: /opt/postgres/data
 
   # Service for ETL using Airflow
   etl:
     build: 
       context: etl/.
-      args:
-        SERVICE_ENVIRONMENT: dev # stage, prod
     volumes:
-      # TODO: where to put dags
-      - ./etl/dags:/usr/local/airflow/dags      
-      - ./etl:/opt/etl
+      - ./etl:/usr/local/etl
       - ./:/opt/jiu_gitsu_root
     depends_on:
       - db
       - airflow-postgres
     environment:
       CONFIG_FILES: 'base.yaml:/opt/jiu_gitsu_root/local_settings.yaml'
-      
+
       # Airflow
-      LOAD_EX: n 
-      #FERNET_KEY: 46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-
-      POSTGRES_USER: "${AIRFLOW_POSTGRES_USER}"
-      POSTGRES_PASSWORD: "${AIRFLOW_POSTGRES_PASSWORD}"
+      
       POSTGRES_HOST: airflow-postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: "${AIRFLOW_POSTGRES_DB}"
+      POSTGRES_PORT: 5432      
+      POSTGRES_DB: ${AIRFLOW_POSTGRES_DB}
+      POSTGRES_USER: ${AIRFLOW_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AIRFLOW_POSTGRES_PASSWORD}
 
-      # AIRFLOW__CORE__REMOTE_LOGGING: True
-      # AIRFLOW__CORE__LOG_FILENAME_TEMPLATE: {{ ti.dag_id }}.lo
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      #FERNET_KEY: 46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
       AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 120 # Prevent airflow from reloading the dags all the time and set. This is the main setting that reduces CPU load in the scheduler
       AIRFLOW__SCHEDULER__SCHEDULER_MAX_THREADS: 1 # This should be set to (CPU Cores - 1)            
-
+      # AIRFLOW__CORE__REMOTE_LOGGING: True
+      # AIRFLOW__CORE__LOG_FILENAME_TEMPLATE: {{ ti.dag_id }}.lo
+      # AIRFLOW__CORE__DAGS_FOLDER: /usr/local/etl/dags
+      AIRFLOW__CORE__BASE_LOG_FOLDER: /usr/local/etl/untracked_logs
     ports:
         - "8080:8080"
     command: webserver
-    healthcheck:
-        test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
-        interval: 30s
-        timeout: 30s
-        retries: 3
     networks:
       - airflow
 
   airflow-postgres:
-      image: postgres:9.6
-      expose:
-          - 5432
-      environment:
-          POSTGRES_USER: "${AIRFLOW_POSTGRES_USER}"
-          POSTGRES_PASSWORD: "${AIRFLOW_POSTGRES_PASSWORD}"
-          POSTGRES_DB: "${AIRFLOW_POSTGRES_DB}"
-      networks:
-        - airflow
+    image: postgres:10.3
+    expose:
+        - 5432
+    volumes:
+      - data-airflow-postgres:/var/lib/postgresql/data
+    environment:
+        POSTGRES_USER: ${AIRFLOW_POSTGRES_USER}
+        POSTGRES_PASSWORD: ${AIRFLOW_POSTGRES_PASSWORD}
+        POSTGRES_DB: ${AIRFLOW_POSTGRES_DB}
+    networks:
+      - airflow
 
   # Service for Analytics
-  analytics:
-    build: 
-      context: analytics/.
-      dockerfile: Dockerfile-dev 
-    volumes:
-      - ./analytics:/opt/analytics
-      - ./:/opt/gitsu_root
-    ports:
-      - 8888:8888
-    depends_on:
-      - db
-    environment:
-      JUPYTER_CONFIG_DIR: '/opt/analytics/'       
-      JUPYTER_PASSWORD: 'abc123'    
-      JUPYTER_ENABLE_LAB: 'yes'
-      CONFIG_FILES: 'base.yaml:/opt/gitsu_root/local_settings.yaml'
+  # analytics:
+  #   build: 
+  #     context: analytics/.
+  #     dockerfile: Dockerfile-dev 
+  #   volumes:
+  #     - ./analytics:/opt/analytics
+  #     - ./:/opt/gitsu_root
+  #   ports:
+  #     - 8888:8888
+  #   depends_on:
+  #     - db
+  #   environment:
+  #     JUPYTER_CONFIG_DIR: '/opt/analytics/'       
+  #     JUPYTER_PASSWORD: 'abc123'    
+  #     JUPYTER_ENABLE_LAB: 'yes'
+  #     CONFIG_FILES: 'base.yaml:/opt/gitsu_root/local_settings.yaml'
 
   # # Service for Analytics
   # gitsu_web:
