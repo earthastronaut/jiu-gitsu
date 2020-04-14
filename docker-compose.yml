@@ -2,7 +2,6 @@ version: '3.7'
 
 volumes:
   data-db:
-  data-airflow-postgres:
 
 services:
 
@@ -19,53 +18,6 @@ services:
       POSTGRES_USER: gitsu
       POSTGRES_DB: gitsu
 
-  # Service for ETL using Airflow
-  etl:
-    build: 
-      context: etl/.
-    volumes:
-      - ./etl:/usr/local/etl
-      - ./:/opt/jiu_gitsu_root
-    depends_on:
-      - db
-      - airflow-postgres
-    environment:
-      CONFIG_FILES: 'base.yaml:/opt/jiu_gitsu_root/local_settings.yaml'
-
-      # Airflow
-      
-      POSTGRES_HOST: airflow-postgres
-      POSTGRES_PORT: 5432      
-      POSTGRES_DB: ${AIRFLOW_POSTGRES_DB}
-      POSTGRES_USER: ${AIRFLOW_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${AIRFLOW_POSTGRES_PASSWORD}
-
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      #FERNET_KEY: 46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
-      AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 120 # Prevent airflow from reloading the dags all the time and set. This is the main setting that reduces CPU load in the scheduler
-      AIRFLOW__SCHEDULER__SCHEDULER_MAX_THREADS: 1 # This should be set to (CPU Cores - 1)            
-      # AIRFLOW__CORE__REMOTE_LOGGING: True
-      # AIRFLOW__CORE__LOG_FILENAME_TEMPLATE: {{ ti.dag_id }}.lo
-      # AIRFLOW__CORE__DAGS_FOLDER: /usr/local/etl/dags
-      AIRFLOW__CORE__BASE_LOG_FOLDER: /usr/local/etl/untracked_logs
-    ports:
-        - "8080:8080"
-    command: webserver
-    networks:
-      - airflow
-
-  airflow-postgres:
-    image: postgres:10.3
-    expose:
-        - 5432
-    volumes:
-      - data-airflow-postgres:/var/lib/postgresql/data
-    environment:
-        POSTGRES_USER: ${AIRFLOW_POSTGRES_USER}
-        POSTGRES_PASSWORD: ${AIRFLOW_POSTGRES_PASSWORD}
-        POSTGRES_DB: ${AIRFLOW_POSTGRES_DB}
-    networks:
-      - airflow
 
   # Service for Analytics
   # analytics:
@@ -85,6 +37,28 @@ services:
   #     JUPYTER_ENABLE_LAB: 'yes'
   #     CONFIG_FILES: 'base.yaml:/opt/gitsu_root/local_settings.yaml'
 
+
+  # Service for ETL using Airflow
+  etl:
+    build: 
+      context: etl/.
+    volumes:
+      - ./etl:/usr/src/app
+      - ./:/opt/jiu_gitsu_root
+    depends_on:
+      - db
+    environment:
+      CONFIG_FILES: 'base.yaml:/opt/jiu_gitsu_root/local_settings.yaml'
+      # TODO: change this password, currently checked into git
+      POSTGRES_PASSWORD: A224697C73DDC7439E35E7272909246D0AB8E5BBE
+      POSTGRES_USER: gitsu
+      POSTGRES_DB: gitsu
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    ports:
+        - "8080:8080"
+
+
   # # Service for Analytics
   # gitsu_web:
   #   build: ./gitsu_web/.
@@ -97,7 +71,3 @@ services:
   #     - db
   #   links:
   #     - db
-
-networks:
-  airflow:
-    driver: bridge
