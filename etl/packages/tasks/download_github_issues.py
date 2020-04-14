@@ -8,6 +8,9 @@ import dateutil.parser
 import etl
 
 
+logger = logging.getLogger(__name__)
+
+
 class GithubIssuesCallback:
 
     def __init__(self, repo, organization):
@@ -48,7 +51,7 @@ class GithubIssuesCallback:
     def new_page_callback(self, iterator, item):
         ratelimit_remaining = getattr(iterator, 'ratelimit_remaining', -1)
         if ratelimit_remaining < 10:
-            logging.info('Waiting...')
+            logger.info('Waiting...')
             time.sleep(15.0 * 60.0)
 
         n = len(self.created)

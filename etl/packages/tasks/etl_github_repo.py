@@ -4,6 +4,9 @@ import logging
 import etl
 
 
+logger = logging.getLogger(__name__)
+
+
 def etl_github_repo(repo):
     obj, created = (
         etl
@@ -17,7 +20,7 @@ def etl_github_repo(repo):
         )
     )
     if created:
-        logging.info('Created REPO {}'.format(repo))
+        logger.info('Created REPO {}'.format(repo))
     return created
 
 

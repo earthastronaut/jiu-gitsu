@@ -6,6 +6,9 @@ import pytz
 import etl
 
 
+logger = logging.getLogger(__name__)
+
+
 def etl_event(event, sess):
     actor = event['actor']
     user_ext_id = None if actor is None else actor['id']
@@ -37,19 +40,19 @@ def etl_event(event, sess):
     )
     sess.add(obj)
 
-    logging.info('For issue {}, create event {}'.format(
+    logger.info('For issue {}, create event {}'.format(
         event['issue_id'], event['id']))
     return True
 
 
 def etl_issue_events(dl_events):
-    logging.info('ETL events for issue')
+    logger.info('ETL events for issue')
 
     data = dl_events.data
     if data is None:
-        logging.info('no events')
+        logger.info('no events')
     elif isinstance(data, list):
-        logging.info('ETL events')
+        logger.info('ETL events')
         with etl.db_session_context() as sess:
             for event in data:
                 etl_event(event, sess)
@@ -57,7 +60,7 @@ def etl_issue_events(dl_events):
         raise Exception('unknown event type {}'.format(type(data)))
 
     with etl.db_session_context() as sess:
-        logging.info('update dw_etl_at')
+        logger.info('update dw_etl_at')
         (
             etl
             .models

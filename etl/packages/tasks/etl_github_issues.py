@@ -7,6 +7,9 @@ import logging
 import etl
 
 
+logger = logging.getLogger(__name__)
+
+
 def etl_issue(dl_issue, session, create_only=True):
     data = dl_issue.data
 
@@ -26,11 +29,11 @@ def etl_issue(dl_issue, session, create_only=True):
         obj = etl.models.GitHubIssue(
             issue_ext_id=data['id'],
         )
-        logging.info('Creating issue {}'.format(data['id']))
+        logger.info('Creating issue {}'.format(data['id']))
 
     elif len(objs) == 1:
         obj = objs[0]
-        logging.info('Found issue {}'.format(data['id']))
+        logger.info('Found issue {}'.format(data['id']))
         created = False
         if create_only:
             return created
@@ -70,7 +73,7 @@ def main(**context):
         for i, dl_issue in enumerate(iterrows):
             etl_issue(dl_issue, iterrows.session)
 
-            logging.info(
+            logger.info(
                 'Issue ETL complete {} -- {}/{} ({:.2%})'
                 .format(dl_issue.data['id'], i, total, i / total)
             )

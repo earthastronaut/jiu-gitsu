@@ -7,6 +7,9 @@ import time
 import etl
 
 
+logger = logging.getLogger(__name__)
+
+
 ISSUE_EVENTS_SCHEMA_NAME = 'github_issue_event'
 
 
@@ -25,7 +28,7 @@ class Event(etl.github.github3.models.GitHubCore):
 
 def extract_transform_issue_events(issue):
     url = issue.issue_events_url
-    logging.info('fetch data from \'{}\''.format(url))
+    logger.info('fetch data from \'{}\''.format(url))
     events = []
     for e in etl.github_client._iter(-1, url, Event):
         e._json_data['issue_id'] = getattr(issue, 'issue_ext_id')
@@ -53,11 +56,11 @@ def etl_issue_events(issue, session):
                 data=issue_events,
             )
         )
-        logging.info('Issue events data stored for {}'.format(key))
+        logger.info('Issue events data stored for {}'.format(key))
     else:
         obj.data = issue_events
         session.commit()
-        logging.info('Issue events data updated for {}'.format(key))
+        logger.info('Issue events data updated for {}'.format(key))
 
 
 def main(update_events_min=None, **context):
@@ -88,10 +91,10 @@ def main(update_events_min=None, **context):
             )
             session.commit()
 
-            logging.info('Updated issue {}/{} ({:.3%}) {}'.format(i, n, i / n, issue.issue_updated_at))  # noqa
-            logging.info('Github Rate Limit {}'.format(etl.github_client.ratelimit_remaining))  # noqa
+            logger.info('Updated issue {}/{} ({:.3%}) {}'.format(i, n, i / n, issue.issue_updated_at))  # noqa
+            logger.info('Github Rate Limit {}'.format(etl.github_client.ratelimit_remaining))  # noqa
             if etl.github_client.ratelimit_remaining < 10:
-                logging.info('Rate Limit Reached, waiting 1 hour')
+                logger.info('Rate Limit Reached, waiting 1 hour')
                 time.sleep(3600.0 + 1.0)
 
 

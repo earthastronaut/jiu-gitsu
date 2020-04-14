@@ -4,6 +4,9 @@ import logging
 import etl
 
 
+logger = logging.getLogger(__name__)
+
+
 def etl_user(user_data):
     obj, created = (
         etl
@@ -16,12 +19,12 @@ def etl_user(user_data):
         )
     )
     if created:
-        logging.info('Created User {}'.format(user_data['login']))
+        logger.info('Created User {}'.format(user_data['login']))
     return created
 
 
 def etl_users_from_issues():
-    logging.info('Starting Github Users ETL based on issues')
+    logger.info('Starting Github Users ETL based on issues')
     iterrows = (
         etl
         .models
@@ -43,7 +46,7 @@ def etl_users_from_issues():
 
 
 def etl_users_from_issue_events():
-    logging.info('Starting Github Users ETL based on issue events')
+    logger.info('Starting Github Users ETL based on issue events')
     iterrows = (
         etl
         .models
@@ -67,7 +70,7 @@ def etl_users_from_issue_events():
 
 
 def main(**context):
-    logging.info('Starting GitHub Users ELT')
+    logger.info('Starting GitHub Users ELT')
     etl_users_from_issues()
     etl_users_from_issue_events()
 
