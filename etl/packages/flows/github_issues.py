@@ -8,7 +8,6 @@ from prefect import task, Flow
 
 from tasks import (
     download_github_issues,
-    etl_github_repo,
     etl_github_users,
     etl_github_issues,
 )
@@ -23,16 +22,15 @@ def build_flow():
     )
     with Flow(name) as flow:
 
+        t = task(download_github_issues.get_watched_repositories)()
+
         t = task(
-            download_github_issues.main,
-            name='download_github_issues', **kws
-        )()
-        t |= task(etl_github_repo.main, name='etl_github_repo', **kws)()
+            download_github_issues.download_github_issues_for_repo
+        ).map(t)
         t |= task(etl_github_users.main, name='etl_github_users', **kws)()
         t |= task(etl_github_issues.main, name='etl_github_issues', **kws)()
 
     # TODO: flow.schedule =
-
     return flow
 
 

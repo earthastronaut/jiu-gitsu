@@ -33,25 +33,23 @@ def github_iterator_results(
     results = []
     page_cnt = 0
     prev_req_url = None
-    try:
-        for item in iterator:
-            # if the page changed, log progress information
-            req_url = iterator.last_response.url
-            if req_url != prev_req_url:
-                prev_req_url = req_url
-                page_cnt += 1
-                logging.info('Pagination {}'.format(page_cnt))
-                logging.info('rate limit remaining {}'.format(
-                    getattr(iterator, 'ratelimit_remaining', -1)))
-                logging.info(req_url)
-                new_page_callback(iterator, item)
 
-            # append the issuees
-            results.append(callback(item))
-            if limit and len(results) > limit:
-                break
-    except Exception as e:
-        logging.error(str(e))
+    for item in iterator:
+        # if the page changed, log progress information
+        req_url = iterator.last_response.url
+        if req_url != prev_req_url:
+            prev_req_url = req_url
+            page_cnt += 1
+            logging.info('Pagination {}'.format(page_cnt))
+            logging.info('rate limit remaining {}'.format(
+                getattr(iterator, 'ratelimit_remaining', -1)))
+            logging.info(req_url)
+            new_page_callback(iterator, item)
+
+        # append the issues
+        results.append(callback(item))
+        if limit and len(results) > limit:
+            break
     return results
 
 

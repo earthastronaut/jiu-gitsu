@@ -13,9 +13,12 @@ logger = logging.getLogger(__name__)
 
 class GithubIssuesCallback:
 
-    def __init__(self, repo, organization):
+    data_lake_schema = 'github_issue'
+    data_lake_key_fmt = 'github_issue_{id}'
+
+    def __init__(self, github_client, repo):
+        self.github_client = github_client
         self.repo = repo
-        self.organization = organization
         self.created = []
 
     def callback(self, issue):
@@ -25,11 +28,11 @@ class GithubIssuesCallback:
             data = issue._json_data
 
         data['repo'] = {
-            'name': self.repo,
-            'organization_name': self.organization,
+            'name': self.repo.repo_name,
+            'organization_name': self.repo.repo_organization_name,
         }
 
-        key = 'github_issue_{}'.format(data['id'])
+        key = self.data_lake_key_fmt.format(**data)
         with etl.db_session_context() as sess:
             obj = None
             created = (
@@ -42,7 +45,7 @@ class GithubIssuesCallback:
             )
             if created:
                 obj = etl.models.DataLake(
-                    key=key, schema='github_issue', data=data,
+                    key=key, schema=self.data_lake_schema, data=data,
                 )
                 sess.add(obj)
         self.created.append(created)
@@ -62,29 +65,33 @@ class GithubIssuesCallback:
         etl.github.github_default_new_page_callback(iterator, item)
 
 
-def download_github_issues_for_repo(repo, organization, since=None):
+def download_github_issues_for_repo(repo, since=None):
     if since is None:
-        raise NotImplementedError('Infer from data, the max issue updated')
-    elif isinstance(since, str):
-        since = (
-            dateutil
-            .parser
-            .parse(since)
-            .replace(tzinfo=pytz.UTC)
-            .isoformat()
+        since = '2000-01-01T00:00:00Z'
+        # TODO: infer since from data
+        logger.warning(
+            'Using since={since}. Need to infer from data the max issue updated'
         )
 
+    since = (
+        dateutil
+        .parser
+        .parse(since)
+        .replace(tzinfo=pytz.UTC)
+        .isoformat()
+    )
+
     # Get the Github repo object
-    repo = (
+    github_client = (
         github3
         .login(
             token=etl.settings.GITHUB_TOKEN,
         )
-        .repository(organization, repo)
+        .repository(repo.repo_organization_name, repo.repo_name)
     )
 
     # create an issues iterator to access all the issues
-    iter_issues = repo.issues(
+    iter_issues = github_client.issues(
         # YYYY-MM-DDTHH:MM:SSZ
         # since='2018-05-01T00:00:00Z',
         since=since,
@@ -98,8 +105,8 @@ def download_github_issues_for_repo(repo, organization, since=None):
     })
 
     c = GithubIssuesCallback(
+        github_client=github_client,
         repo=repo,
-        organization=organization,
     )
 
     issues = etl.github.github_iterator_results(
@@ -110,20 +117,29 @@ def download_github_issues_for_repo(repo, organization, since=None):
     return issues
 
 
-def main(organization_repo=None, since=None, **context):
-    if organization_repo is not None:
-        organization, repo = organization_repo.split('/')
-    else:
-        # TODO: get watched repos
-        organization = 'WordPress'
-        repo = 'gutenberg'
+def get_watched_repositories():
+    return list((
+        etl
+        .models
+        .GitHubRepo
+        ._query
+        .filter()
+    ))
+
+
+def main(repo_name='gutenberg', organization_name='WordPress', since='2000-01-01T00:00'):
 
     # TODO: SINCE==none should infer from the data
     # TODO: Since should be passed in with airflow?
-    if since is None:
-        since = '2000-01-01T00:00'
 
-    download_github_issues_for_repo(repo, organization, since=since)
+    repositories = [
+        etl.models.GitHubRepo(
+            repo_name=repo_name,
+            repo_id=repo_name,
+            repo_organzation_name=organization_name,
+        )
+    ]
+    return list(map(download_github_issues_for_repo, repositories))
 
 
 if __name__ == '__main__':
