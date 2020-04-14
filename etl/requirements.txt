@@ -13,3 +13,9 @@ github3.py
 
 ## For development
 ipython
+
+## For task management and scheduling
+prefect[viz]
+
+## For looking for file changes and executing register flows command
+watchdog[watchmedo]
