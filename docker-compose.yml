@@ -48,8 +48,10 @@ services:
     depends_on:
       - db
     environment:
-      CONFIG_FILES: 'base.yaml:/opt/jiu_gitsu_root/local_settings.yaml'
-      # TODO: change this password, currently checked into git
+      APP_CONFIG: 'etl.conf.dev'
+
+      GITHUB_TOKEN: '153c127c98f049efb64292b1feb27cad2f609741'
+
       POSTGRES_PASSWORD: A224697C73DDC7439E35E7272909246D0AB8E5BBE
       POSTGRES_USER: gitsu
       POSTGRES_DB: gitsu
