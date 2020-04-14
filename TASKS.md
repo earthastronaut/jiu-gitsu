@@ -1,5 +1,8 @@
 
-## Task-3 implement airflow for etl
+
+## Task-3 implement ~~airflow~~ prefect flows
+
+get both flows working
 
 update download_events:
  1. download issues
@@ -18,6 +21,19 @@ Data Pipeline
 1. download_github_issue_events.py
 1. etl_github_users.py
 1. etl_github_issues.py
+
+
+## Task implement prefect scheduler
+
+with flow working using flow.run()
+
+No can register with the scheduler. 
+
+Ok, well first you have to get `prefect server start` into containers (and probably not docker-in-docker)
+
+Then you can start the `prefect agent start` client in etl container and register flows. 
+
+register_flows.py script has a watchmedo which will register jobs as updated.
 
 
 ## Task-10 Logging aggregation
