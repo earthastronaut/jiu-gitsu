@@ -70,4 +70,10 @@ DATABASES = {
 # Project
 # --------------------------------------------------------------------------- #
 
+# Github
+
 GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
+
+# Prefect flows
+
+FLOW_VISIUALIZATIONS_PATH = os.path.join(APP_PATH, 'docs/flow_viz')
