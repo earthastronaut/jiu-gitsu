@@ -23,6 +23,15 @@ Data Pipeline
 1. etl_github_issues.py
 
 
+## Task remove github client 
+
+https://api.github.com/repositories/80862584/issues?state=all&sort=updated&direction=asc&since=2000-01-01T00%3A00%3A00%2B00%3A00&page=33&per_page=300
+
+## Task separate requirements dev
+
+ipython should be in a dev file
+
+
 ## Task implement prefect scheduler
 
 with flow working using flow.run()
