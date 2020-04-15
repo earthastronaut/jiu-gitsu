@@ -10,48 +10,40 @@ from tasks import constants
 logger = logging.getLogger(__name__)
 
 
-class GithubIssuesCallback:
+def save_issues_to_date_lake(github_issues, repo):
+    issues = {}
+    for data in github_issues:
+        data['repo'] = {
+            'name': repo.repo_name,
+            'organization_name': repo.repo_organization_name,
+        }
 
-    def __init__(self, repo):
-        self.repo = repo
+        key = constants.GITHUB_ISSUE_KEY_FMT.format(**data)
+        issues[key] = data
 
-    def __call__(self, github_issues):
-        repo = self.repo
+    with etl.db_session_context() as session:
+        rows = (
+            etl
+            .models
+            .DataLake
+            ._query(session)
+            .filter(key__in=tuple(issues.keys()))
+        )
+        keys_found = set([r.key for r in rows])
+        keys_new = set(tuple(issues.keys())) - keys_found
+        logger.info(
+            f'Load {len(keys_new)}/{len(issues)} new github_issues '
+            f'into data_lake.'
+        )
 
-        issues = {}
-        for issue in github_issues:
-            data = issue._json_data
-            data['repo'] = {
-                'name': repo.repo_name,
-                'organization_name': repo.repo_organization_name,
-            }
-
-            key = constants.GITHUB_ISSUE_KEY_FMT.format(**data)
-            issues[key] = data
-
-        with etl.db_session_context() as session:
-            rows = (
-                etl
-                .models
-                .DataLake
-                ._query(session)
-                .filter(key__in=tuple(issues.keys()))
-            )
-            keys_found = set([r.key for r in rows])
-            keys_new = set(tuple(issues.keys())) - keys_found
-            logger.info(
-                f'Load {len(keys_new)}/{len(issues)} new github_issues '
-                f'into data_lake.'
-            )
-
-            for key in keys_new:
-                session.add(
-                    etl.models.DataLake(
-                        key=key,
-                        schema=constants.GITHUB_ISSUE_SCHEMA,
-                        data=issues[key],
-                    )
+        for key in keys_new:
+            session.add(
+                etl.models.DataLake(
+                    key=key,
+                    schema=constants.GITHUB_ISSUE_SCHEMA,
+                    data=issues[key],
                 )
+            )
 
 
 def get_max_updated_at(repo):
@@ -76,39 +68,35 @@ def download_github_issues_for_repo(repo, since=None):
         # since = '2000-01-01T00:00:00Z'
         since = get_max_updated_at(repo)
 
-    since = arrow.get(since).isoformat()
-
-    # Get the Github repo object
-    github_client = (
-        etl
-        .github
-        .create_github_client()
-        .repository(repo.repo_organization_name, repo.repo_name)
+    url = etl.github.create_url_github_repo(
+        'issues/',
+        repo_organization_name=repo.repo_organization_name,
+        repo_name=repo.repo_name,
     )
 
-    # create an issues iterator to access all the issues
-    iter_issues = github_client.issues(
-        # YYYY-MM-DDTHH:MM:SSZ
+    params = {
         # since='2018-05-01T00:00:00Z',
-        since=since,
-        sort='updated',
-        direction='asc',
-        state='all',
-    )
-    iter_issues.params.update({
+        'since': arrow.get(since).isoformat(),
+        'sort': 'updated',
+        'direction': 'asc',
+        'state': 'all',
         'page': 1,
-        'per_page': 300,
-    })
+        'per_page': 100,
+    }
 
-    etl.github.execute_github_iterator(iter_issues, GithubIssuesCallback(repo))
+    callback = etl.github.GithubCallback(save_issues_to_date_lake, repo=repo)
+    etl.request_paginated(
+        'GET', url,
+        callback=callback,
+        params=params,
+        auth=etl.github.get_github_auth(),
+    )
 
 
 def get_watched_repositories():
-    with etl.db_session_context() as session:
-        return list((
-            etl
-            .models
-            .GitHubRepo
-            ._query(session)
-            .filter()
-        ))
+    with etl.db_session_context(expire_on_commit=False) as session:
+        return (
+            session
+            .query(etl.models.GitHubRepo)
+            .all()
+        )
