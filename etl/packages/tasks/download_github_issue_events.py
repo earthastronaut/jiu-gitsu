@@ -10,26 +10,12 @@ from tasks import constants
 logger = logging.getLogger(__name__)
 
 
-class Event(etl.github.github3.models.GitHubCore):
-    def __init__(self, json, session):
-        """Initialize our basic object.
-
-        Pretty much every object will pass in decoded JSON and a Session.
-        """
-        # Either or 'session' is an instance of a GitHubCore sub-class or it
-        # is a session. In the former case it will have a 'session' attribute.
-        # If it doesn't, we can just default to using the passed in session.
-        self.session = getattr(session, 'session', session)
-        self._json_data = json
-
-
 def load_issue_events(issue, issue_events):
     issue_id = issue['issue_ext_id']
 
     events = []
-    for e in issue_events:
-        e._json_data['issue_id'] = issue_id
-        data = e._json_data
+    for data in issue_events:
+        data['issue_id'] = issue_id
         events.append(data)
 
     key = constants.GITHUB_ISSUE_EVENTS_KEY_FMT.format(issue_id=issue_id)
@@ -83,18 +69,29 @@ def load_issue_events(issue, issue_events):
         logger.info(f'Updated issue {i}/{n} ({p:.3%}) {now}')
 
 
+class GithubIssueEventsStore:
+
+    def __init__(self):
+        self.events = []
+
+    def __call__(self, events):
+        self.events.extend(events)
+
+
 def download_and_save_issue_events(issue):
     url = issue['issue_events_url']
-    logger.info(f'fetch data from "{url}"')
-
-    iterator = (
-        etl
-        .github
-        .create_github_client()
-        ._iter(-1, url, Event)
+    params = {
+        'page': 1,
+        'per_page': 100,
+    }
+    events_store = GithubIssueEventsStore()
+    etl.request_paginated(
+        'GET', url,
+        callback=etl.github.GithubCallback(events_store),
+        params=params,
+        auth=etl.github.get_github_auth(),
     )
-    issue_events = etl.github.execute_github_iterator(iterator)
-    load_issue_events(issue, issue_events)
+    load_issue_events(issue, events_store.events)
 
 
 def get_github_issues_to_update(update_events_min):

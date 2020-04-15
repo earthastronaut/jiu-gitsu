@@ -41,7 +41,12 @@ def fetch_github_ratelimit():
     )
     resp = requests.request('get', url)
     data = resp.json()
-    rate = data['rate']
+    rate = data['resources']['core']
+    # {
+    #     'limit': -1,
+    #     'remaining': -1,
+    #     'reset': 1586998345,
+    # }
     rate['reset_at'] = arrow.Arrow.fromtimestamp(rate['reset'])
     return rate
 
