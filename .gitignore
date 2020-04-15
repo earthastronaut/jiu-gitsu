@@ -1,7 +1,9 @@
+# Project
 data
-local_*
 untracked_*
 
+# Environment
+.env
 
 # jupyter
 analytics/lab
