@@ -51,7 +51,10 @@ services:
     environment:
       APP_CONFIG: 'etl.conf.dev'
 
-      GITHUB_TOKEN: '153c127c98f049efb64292b1feb27cad2f609741'
+      # Generate a token and put that token into .env file
+      # https://github.com/settings/tokens
+      # GITHUB_TOKEN=2AB...E2
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
 
       POSTGRES_PASSWORD: A224697C73DDC7439E35E7272909246D0AB8E5BBE
       POSTGRES_USER: gitsu
