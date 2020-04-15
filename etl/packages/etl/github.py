@@ -36,22 +36,28 @@ def display_wait(wait, display_interval=60):
         now = time.time()
 
 
-def execute_github_iterator(iterator, page_callback):
+def execute_github_iterator(iterator, page_callback=None):
     prev_req_url = None
     items = []
+    page_items = []
     for item in iterator:
         # if the page changed, log progress information
         req_url = iterator.last_response.url
         if req_url != prev_req_url:
-            page_callback(items)
-            items = []
             prev_req_url = req_url
+
+            if page_callback is not None:
+                page_callback(page_items)
+            page_items = []
+
             remaining = iterator.ratelimit_remaining
             logging.info(f'ratelimit remaining {remaining}')
             if remaining < GITHUB_RATELIMIT_REMAINING_MIN:
                 logger.info('Waiting...')
                 display_wait(GITHUB_RATELIMIT_WAIT_TIME)
         else:
-            items.append(item)
-    if len(items):
-        page_callback(items)
+            page_items.append(item)
+        items.append(item)
+    if len(page_items) and page_callback is not None:
+        page_callback(page_items)
+    return items
