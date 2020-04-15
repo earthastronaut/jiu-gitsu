@@ -1,5 +1,6 @@
 #!env python
 import logging
+import multiprocessing
 
 import arrow
 
@@ -86,11 +87,13 @@ def main(**context):
                 .values('key')
             )
         ]
-    etl.etl.map_async(
-        etl_issue_events,
-        data_lake_keys,
-        chunksize=10,
-    )
+
+    with multiprocessing.Pool() as pool:
+        pool.map_async(
+            etl_issue_events,
+            data_lake_keys,
+            chunksize=10,
+        ).get()
 
 
 if __name__ == '__main__':
