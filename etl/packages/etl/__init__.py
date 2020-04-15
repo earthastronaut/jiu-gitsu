@@ -4,6 +4,8 @@ from . import (
     errors,
     models,
     github,
+    requests,
 )
 
 from .database import *
+from .requests import *
