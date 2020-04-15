@@ -1,9 +1,9 @@
 digraph {
-	140669754036672 [label=get_watched_repositories shape=ellipse]
-	140669754039408 [label="download_github_issues_for_repo <map>" shape=box]
-	140669754039984 [label=etl_github_issues shape=ellipse]
-	140669754039744 [label=etl_github_users shape=ellipse]
-	140669754039408 -> 140669754039744
-	140669754039744 -> 140669754039984
-	140669754036672 -> 140669754039408 [label=repo style=dashed]
+	140304880356656 [label=get_watched_repositories shape=ellipse]
+	140304880455744 [label=etl_github_issues shape=ellipse]
+	140304880356752 [label="download_github_issues_for_repo <map>" shape=box]
+	140304880356272 [label=etl_github_users shape=ellipse]
+	140304880356656 -> 140304880356752 [label=repo style=dashed]
+	140304880356272 -> 140304880455744
+	140304880356752 -> 140304880356272
 }

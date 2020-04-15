@@ -1,0 +1,7 @@
+digraph {
+	140304881442928 [label=download_github_issue_events shape=ellipse]
+	140304880355888 [label=etl_github_issue_events shape=ellipse]
+	140304880354640 [label=etl_github_users shape=ellipse]
+	140304881442928 -> 140304880354640
+	140304880354640 -> 140304880355888
+}
