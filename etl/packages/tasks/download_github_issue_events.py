@@ -4,6 +4,7 @@ import logging
 import arrow
 
 import etl
+from etl.conf import settings
 from tasks import constants
 
 logger = logging.getLogger(__name__)
