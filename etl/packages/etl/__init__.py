@@ -6,9 +6,6 @@ from .database import (
     db_session_context,
 )
 
-from .github import (
-    github_client,
-)
 
 from .etl import (
     map_async,
@@ -16,5 +13,6 @@ from .etl import (
 
 
 from . import (
-    models
+    models,
+    github,
 )

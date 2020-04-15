@@ -1,7 +1,5 @@
-#!env python
+#!/usr/local/bin/python
 import logging
-import github3
-import time
 import pytz
 import dateutil.parser
 
@@ -11,67 +9,75 @@ import etl
 logger = logging.getLogger(__name__)
 
 
+GITHUB_ISSUE_SCHEMA = 'github_issue'
+GITHUB_ISSUE_KEY_FMT = 'github_issue_{id}'
+
+
 class GithubIssuesCallback:
 
-    data_lake_schema = 'github_issue'
-    data_lake_key_fmt = 'github_issue_{id}'
-
-    def __init__(self, github_client, repo):
-        self.github_client = github_client
+    def __init__(self, repo):
         self.repo = repo
-        self.created = []
 
-    def callback(self, issue):
-        if isinstance(issue, dict):
-            data = issue
-        else:
+    def __call__(self, github_issues):
+        repo = self.repo
+
+        issues = {}
+        for issue in github_issues:
             data = issue._json_data
+            data['repo'] = {
+                'name': repo.repo_name,
+                'organization_name': repo.repo_organization_name,
+            }
 
-        data['repo'] = {
-            'name': self.repo.repo_name,
-            'organization_name': self.repo.repo_organization_name,
-        }
+            key = GITHUB_ISSUE_KEY_FMT.format(**data)
+            issues[key] = data
 
-        key = self.data_lake_key_fmt.format(**data)
         with etl.db_session_context() as sess:
-            obj = None
-            created = (
-                not
+            rows = (
                 etl
                 .models
                 .DataLake
                 ._query
-                .exists(_session=sess, key=key)
+                .filter(_session=sess, key__in=tuple(issues.keys()))
             )
-            if created:
-                obj = etl.models.DataLake(
-                    key=key, schema=self.data_lake_schema, data=data,
+            keys_found = set([r.key for r in rows])
+            keys_new = set(tuple(issues.keys())) - keys_found
+            logger.info(
+                f'Load {len(keys_new)}/{len(issues)} new github_issues '
+                f'into data_lake.'
+            )
+
+            for key in keys_new:
+                sess.add(
+                    etl.models.DataLake(
+                        key=key,
+                        schema=GITHUB_ISSUE_SCHEMA,
+                        data=issues[key],
+                    )
                 )
-                sess.add(obj)
-        self.created.append(created)
-        return created
 
-    def new_page_callback(self, iterator, item):
-        ratelimit_remaining = getattr(iterator, 'ratelimit_remaining', -1)
-        if ratelimit_remaining < 10:
-            logger.info('Waiting...')
-            time.sleep(15.0 * 60.0)
 
-        n = len(self.created)
-        s = sum(self.created)
-        if n > 1 and s == 0:
-            raise Exception('stop!')
-        self.created = []
-        etl.github.github_default_new_page_callback(iterator, item)
+def get_max_updated_at(repo):
+    sql = """
+    SELECT MAX(data ->> 'updated_at')
+    FROM data_lake
+    WHERE
+        schema = :github_issue_schema
+        AND (data -> 'repo' ->> 'name') = :repo_name
+    """
+    params = {
+        'github_issue_schema': GITHUB_ISSUE_SCHEMA,
+        'repo_name': repo.repo_name,
+    }
+    with etl.db_session_context() as sess:
+        q = sess.execute(sql, params)
+        return q.fetchone()[0]
 
 
 def download_github_issues_for_repo(repo, since=None):
     if since is None:
-        since = '2000-01-01T00:00:00Z'
-        # TODO: infer since from data
-        logger.warning(
-            'Using since={since}. Need to infer from data the max issue updated'
-        )
+        # since = '2000-01-01T00:00:00Z'
+        since = get_max_updated_at(repo)
 
     since = (
         dateutil
@@ -83,10 +89,9 @@ def download_github_issues_for_repo(repo, since=None):
 
     # Get the Github repo object
     github_client = (
-        github3
-        .login(
-            token=etl.settings.GITHUB_TOKEN,
-        )
+        etl
+        .github
+        .create_github_client()
         .repository(repo.repo_organization_name, repo.repo_name)
     )
 
@@ -104,17 +109,7 @@ def download_github_issues_for_repo(repo, since=None):
         'per_page': 300,
     })
 
-    c = GithubIssuesCallback(
-        github_client=github_client,
-        repo=repo,
-    )
-
-    issues = etl.github.github_iterator_results(
-        iter_issues,
-        callback=c.callback,
-        new_page_callback=c.new_page_callback,
-    )
-    return issues
+    etl.github.execute_github_iterator(iter_issues, GithubIssuesCallback(repo))
 
 
 def get_watched_repositories():
@@ -125,24 +120,3 @@ def get_watched_repositories():
         ._query
         .filter()
     ))
-
-
-def main(repo_name='gutenberg', organization_name='WordPress', since='2000-01-01T00:00'):
-
-    # TODO: SINCE==none should infer from the data
-    # TODO: Since should be passed in with airflow?
-
-    repositories = [
-        etl.models.GitHubRepo(
-            repo_name=repo_name,
-            repo_id=repo_name,
-            repo_organzation_name=organization_name,
-        )
-    ]
-    return list(map(download_github_issues_for_repo, repositories))
-
-
-if __name__ == '__main__':
-    main(
-        since='2019-11-01T00:00'
-    )
