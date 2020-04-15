@@ -8,51 +8,53 @@ from sqlalchemy.orm import relationship
 from etl import database
 
 
-def with_default_session(func):
-    def func_with_default_session(self, _session=None, *args, **kws):
-        if _session is None:
-            with database.db_session_context() as session:
-                return func(self, _session=session, *args, **kws)
+def with_default_session(method):
+    def func_with_default_session(self, *args, **kws):
+        if self.session is None:
+            with database.db_session_context() as self.session:
+                result = method(self, *args, **kws)
+            self.session = None
+            return result
         else:
-            return func(self, _session=_session, *args, **kws)
+            return method(self, *args, **kws)
     return func_with_default_session
 
 
 class Query:
-
     def __init__(self, model_cls):
         self.model_cls = model_cls
+        self.session = None
 
     @with_default_session
-    def exists(self, _session=None, **kws):
+    def exists(self, **kws):
         for i, (k, v) in enumerate(kws.items()):
             check = (getattr(self.model_cls, k) == v)
             if i == 0:
                 q = check
             else:
                 q &= check
-        return _session.query(exists().where(q)).scalar()
+        return self.session.query(exists().where(q)).scalar()
 
     @with_default_session
-    def get(self, key, _session=None):
-        return _session.query(self.model_cls).get(key)
+    def get(self, key):
+        return self.session.query(self.model_cls).get(key)
 
     @with_default_session
-    def get_or_create(self, key, _session=None, **kws):
-        obj = self.get(key, _session=_session)
+    def get_or_create(self, key, **kws):
+        obj = self.get(key)
         created = obj is None
         if created:
             obj = self.model_cls(**kws)
-            _session.add(obj)
+            self.session.add(obj)
         return obj, created
 
     @with_default_session
-    def exists_or_create(self, _session=None, **kws):
-        created = not self.exists(_session=_session, **kws)
+    def exists_or_create(self, **kws):
+        created = not self.exists(**kws)
         obj = None
         if created:
             obj = self.model_cls(**kws)
-            _session.add(obj)
+            self.session.add(obj)
         return obj, created
 
     def filter_clause(self, **kws):
@@ -92,9 +94,16 @@ class Query:
         return and_(*clauses)
 
     @with_default_session
-    def filter(self, _session=None, **kws):
+    def filter(self, **kws):
         clause = self.filter_clause(**kws)
-        return _session.query(self.model_cls).filter(clause)
+        return self.session.query(self.model_cls).filter(clause)
+
+    def set_session(self, session):
+        self.session = session
+        return self
+
+    def __call__(self, session=None):
+        return self.set_session(session)
 
 
 class Meta(DeclarativeMeta):
