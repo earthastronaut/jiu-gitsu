@@ -17,11 +17,8 @@ def etl_issue(dl_issue, session, create_only=True):
         etl
         .models
         .GitHubIssue
-        ._query
-        .filter(
-            issue_ext_id=data['id'],
-            _session=session
-        )
+        ._query(session)
+        .filter(issue_ext_id=data['id'])
         .all()
     )
     if len(objs) == 0:
@@ -57,30 +54,28 @@ def etl_issue(dl_issue, session, create_only=True):
 
 
 def main(**context):
-    # UPDATE data_lake SET dw_etl_at = NULL WHERE dw_etl_at IS NOT NULL;
-    iterrows = (
-        etl
-        .models
-        .DataLake
-        ._query
-        .filter(
-            schema='github_issue',
-            dw_etl_at__is=None,
+    with etl.db_session_context() as session:
+        # UPDATE data_lake SET dw_etl_at = NULL WHERE dw_etl_at IS NOT NULL;
+        iterrows = (
+            etl
+            .models
+            .DataLake
+            ._query(session)
+            .filter(
+                schema='github_issue',
+                dw_etl_at__is=None,
+            )
         )
-    )
-    total = iterrows.count()
-    try:
+        total = iterrows.count()
         for i, dl_issue in enumerate(iterrows):
-            etl_issue(dl_issue, iterrows.session)
+            etl_issue(dl_issue, session)
 
             logger.info(
                 'Issue ETL complete {} -- {}/{} ({:.2%})'
                 .format(dl_issue.data['id'], i, total, i / total)
             )
             dl_issue.dw_etl_at = datetime.datetime.now(pytz.timezone('UTC'))
-            iterrows.session.commit()
-    finally:
-        iterrows.session.close()
+            session.commit()
 
 
 if __name__ == '__main__':

@@ -1,16 +1,13 @@
 #!/usr/local/bin/python
 import logging
-import pytz
-import dateutil.parser
+
+import arrow
 
 import etl
+from tasks import constants
 
 
 logger = logging.getLogger(__name__)
-
-
-GITHUB_ISSUE_SCHEMA = 'github_issue'
-GITHUB_ISSUE_KEY_FMT = 'github_issue_{id}'
 
 
 class GithubIssuesCallback:
@@ -29,16 +26,16 @@ class GithubIssuesCallback:
                 'organization_name': repo.repo_organization_name,
             }
 
-            key = GITHUB_ISSUE_KEY_FMT.format(**data)
+            key = constants.GITHUB_ISSUE_KEY_FMT.format(**data)
             issues[key] = data
 
-        with etl.db_session_context() as sess:
+        with etl.db_session_context() as session:
             rows = (
                 etl
                 .models
                 .DataLake
-                ._query
-                .filter(_session=sess, key__in=tuple(issues.keys()))
+                ._query(session)
+                .filter(key__in=tuple(issues.keys()))
             )
             keys_found = set([r.key for r in rows])
             keys_new = set(tuple(issues.keys())) - keys_found
@@ -48,10 +45,10 @@ class GithubIssuesCallback:
             )
 
             for key in keys_new:
-                sess.add(
+                session.add(
                     etl.models.DataLake(
                         key=key,
-                        schema=GITHUB_ISSUE_SCHEMA,
+                        schema=constants.GITHUB_ISSUE_SCHEMA,
                         data=issues[key],
                     )
                 )
@@ -66,7 +63,7 @@ def get_max_updated_at(repo):
         AND (data -> 'repo' ->> 'name') = :repo_name
     """
     params = {
-        'github_issue_schema': GITHUB_ISSUE_SCHEMA,
+        'github_issue_schema': constants.GITHUB_ISSUE_SCHEMA,
         'repo_name': repo.repo_name,
     }
     with etl.db_session_context() as sess:
@@ -79,13 +76,7 @@ def download_github_issues_for_repo(repo, since=None):
         # since = '2000-01-01T00:00:00Z'
         since = get_max_updated_at(repo)
 
-    since = (
-        dateutil
-        .parser
-        .parse(since)
-        .replace(tzinfo=pytz.UTC)
-        .isoformat()
-    )
+    since = arrow.get(since).isoformat()
 
     # Get the Github repo object
     github_client = (
@@ -113,10 +104,11 @@ def download_github_issues_for_repo(repo, since=None):
 
 
 def get_watched_repositories():
-    return list((
-        etl
-        .models
-        .GitHubRepo
-        ._query
-        .filter()
-    ))
+    with etl.db_session_context() as session:
+        return list((
+            etl
+            .models
+            .GitHubRepo
+            ._query(session)
+            .filter()
+        ))

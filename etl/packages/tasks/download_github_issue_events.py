@@ -1,16 +1,12 @@
 #!env python
 import logging
-import datetime
-import pytz
-import time
+
+import arrow
 
 import etl
-
+from tasks import constants
 
 logger = logging.getLogger(__name__)
-
-
-ISSUE_EVENTS_SCHEMA_NAME = 'github_issue_event'
 
 
 class Event(etl.github.github3.models.GitHubCore):
@@ -26,76 +22,126 @@ class Event(etl.github.github3.models.GitHubCore):
         self._json_data = json
 
 
-def extract_transform_issue_events(issue):
-    url = issue.issue_events_url
-    logger.info('fetch data from \'{}\''.format(url))
+def load_issue_events(issue, issue_events):
+    issue_id = issue['issue_ext_id']
+
     events = []
-    for e in etl.github_client._iter(-1, url, Event):
-        e._json_data['issue_id'] = getattr(issue, 'issue_ext_id')
+    for e in issue_events:
+        e._json_data['issue_id'] = issue_id
         data = e._json_data
         events.append(data)
-    return events
 
-
-def etl_issue_events(issue, session):
-    issue_events = extract_transform_issue_events(issue)
-
-    key = '{}_{}'.format(ISSUE_EVENTS_SCHEMA_NAME, issue.issue_ext_id)
-
-    obj = etl.models.DataLake._query.get(key=key)
-    if obj is None:
-        (
+    key = constants.GITHUB_ISSUE_EVENTS_KEY_FMT.format(issue_id=issue_id)
+    with etl.db_session_context() as session:
+        obj = (
             etl
             .models
             .DataLake
-            ._query
-            .exists_or_create(
-                _session=session,
+            ._query(session)
+            .get(key=key)
+        )
+        obj_found = (obj is not None)
+        if obj_found:
+            # update
+            obj.data = events
+        else:
+            obj = etl.models.DataLake(
                 key=key,
-                schema=ISSUE_EVENTS_SCHEMA_NAME,
-                data=issue_events,
+                schema=constants.GITHUB_ISSUE_EVENTS_SCHEMA,
+                data=events,
             )
-        )
-        logger.info('Issue events data stored for {}'.format(key))
-    else:
-        obj.data = issue_events
-        session.commit()
-        logger.info('Issue events data updated for {}'.format(key))
+            session.add(obj)
+
+        s = 'updated' if obj_found else 'created'
+        logger.info(f'Issue events data {s} for {key}')
+
+        now = arrow.utcnow()
+
+        # TODO: the sqlalchemy update was trying to force session.commit()
+        # so I decided to by-pass. In future try to use something in sqlalchemy
+        assert etl.models.GitHubIssue.__tablename__ == 'github_issue'
+        sql = """
+        UPDATE github_issue
+        SET
+            issue_events_last_loaded_at = :value
+        WHERE
+            issue_ext_id = :issue_ext_id
+        """
+
+        params = {
+            'value': now.datetime.isoformat(),
+            'issue_ext_id': issue_id,
+        }
+
+        session.execute(sql, params)
+
+        md = issue['metadata']
+        i = md['runtime_index']
+        n = md['total_count']
+        p = md['runtime_precent']
+        logger.info(f'Updated issue {i}/{n} ({p:.3%}) {now}')
 
 
-def main(update_events_min=None, **context):
-    if update_events_min is None:
-        update_events_min = (
-            datetime.datetime.now(pytz.timezone('UTC'))
-            - datetime.timedelta(days=7)
-        )
+def download_and_save_issue_events(issue):
+    url = issue['issue_events_url']
+    logger.info(f'fetch data from "{url}"')
 
+    iterator = (
+        etl
+        .github
+        .create_github_client()
+        ._iter(-1, url, Event)
+    )
+    issue_events = etl.github.execute_github_iterator(iterator)
+    load_issue_events(issue, issue_events)
+
+
+def get_github_issues_to_update(update_events_min):
     Model = etl.models.GitHubIssue
     filter_clause = Model._query.filter_clause
-
     clause = (
-        filter_clause(
-            issue_events_last_loaded_at__lt=update_events_min,
-        )
-        | filter_clause(
-            issue_events_last_loaded_at__is=None,
-        )
+        filter_clause(issue_events_last_loaded_at__lt=update_events_min.datetime)  # noqa
+        | filter_clause(issue_events_last_loaded_at__is=None)
     )
+    columns = [
+        'issue_ext_id',
+        'issue_events_url',
+    ]
     with etl.db_session_context() as session:
-        iterrows = session.query(Model).filter(clause).order_by(Model.issue_updated_at.desc())  # noqa
-        n = iterrows.count()
-        for i, issue in enumerate(iterrows):
-            etl_issue_events(issue, session)
-            issue.issue_events_last_loaded_at = (
-                datetime.datetime.now(pytz.timezone('UTC'))
-            )
-            session.commit()
+        query = (
+            session
+            .query(Model)
+            .filter(clause)
+        )
+        count = query.count()
+        iterrows = (
+            query
+            .order_by(Model.issue_updated_at.desc())
+            .values(*[getattr(Model, c) for c in columns])
+        )
+        issues = []
+        for values in iterrows:
+            issue = dict(zip(columns, values))
+            issue['metadata'] = {
+                'runtime_index': len(issues),
+                'total_count': count,
+                'runtime_precent': len(issues) / count,
+            }
+            issues.append(issue)
+        return issues
 
-            logger.info('Updated issue {}/{} ({:.3%}) {}'.format(i, n, i / n, issue.issue_updated_at))  # noqa
-            logger.info('Github Rate Limit {}'.format(etl.github_client.ratelimit_remaining))  # noqa
-            if etl.github_client.ratelimit_remaining < 10:
-                logger.info('Rate Limit Reached, waiting 1 hour')
-                time.sleep(3600.0 + 1.0)
+
+def main(update_events_min=None):
+    if update_events_min is None:
+        update_events_min = (
+            arrow
+            .utcnow()
+            .shift(seconds=(-1 * settings.GITHUB_ISSUE_EVENTS_UPDATE_FREQUENCY))
+        )
+    issues = get_github_issues_to_update(update_events_min)
+    # TODO: with multiprocessing.Pool() as pool:
+    for i, issue in enumerate(issues):
+        download_and_save_issue_events(issue)
 
 
 if __name__ == '__main__':

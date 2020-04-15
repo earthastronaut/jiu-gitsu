@@ -77,3 +77,8 @@ GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
 # Prefect flows
 
 FLOW_VISIUALIZATIONS_PATH = os.path.join(APP_PATH, 'docs/flow_viz')
+
+# Flow settings
+
+# how long is "out of date" for updating events
+GITHUB_ISSUE_EVENTS_UPDATE_FREQUENCY = 7 * 24 * 3600
