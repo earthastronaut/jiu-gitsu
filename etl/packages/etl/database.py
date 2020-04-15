@@ -1,14 +1,25 @@
 import datetime
 import logging
-from contextlib import contextmanager
+from collections import namedtuple
+import multiprocessing
+import threading
 
 import sqlalchemy
-from sqlalchemy.orm import sessionmaker
+import sqlalchemy.orm
 
 from etl.conf import settings
 
 
 ENGINES = {}
+EngineKey = namedtuple(
+    'EngineKey',
+    [
+        'db_connection_name',
+        'current_process_id',
+        'current_thread_id',
+        'current_thread_name',
+    ]
+)
 
 
 def get_db_engine(db_connection_name='default'):
@@ -27,9 +38,16 @@ def get_db_engine(db_connection_name='default'):
 
     """
     global ENGINES
-    if db_connection_name not in ENGINES:
-        ENGINES[db_connection_name] = create_db_engine(db_connection_name)
-    return ENGINES[db_connection_name]
+    thread = threading.current_thread()
+    key = EngineKey(
+        db_connection_name=db_connection_name,
+        current_process_id=multiprocessing.current_process().pid,
+        current_thread_id=thread.ident,
+        current_thread_name=thread.name,
+    )
+    if key not in ENGINES:
+        ENGINES[key] = create_db_engine(db_connection_name)
+    return ENGINES[key]
 
 
 def create_db_engine(db_connection_name='default', **create_engine_kws):
@@ -72,24 +90,29 @@ def create_db_engine(db_connection_name='default', **create_engine_kws):
     return engine
 
 
+class SessionContext(sqlalchemy.orm.Session):
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        if exception_type is None:
+            self.commit()
+        else:
+            self.rollback()
+        self.close()
+
+
 def db_session(db_connection_name='default', **kws):
     engine = get_db_engine(db_connection_name)
-    Session = sessionmaker(bind=engine)
+    Session = sqlalchemy.orm.sessionmaker(bind=engine, class_=SessionContext)
     return Session(**kws)
 
 
-@contextmanager
 def db_session_context(db_connection_name='default', **kws):
     """Provide a transactional scope around a series of operations."""
-    session = db_session(db_connection_name, **kws)
-    try:
-        yield session
-        session.commit()
-    except:
-        session.rollback()
-        raise
-    finally:
-        session.close()
+    # Deprecated: haven't refactored to remove this
+    return db_session(db_connection_name, **kws)
 
 
 def structure_query_results(query_results, data_structure=None):
