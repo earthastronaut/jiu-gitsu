@@ -5,28 +5,23 @@ from sqlalchemy.dialects.postgresql.json import JSONB
 from sqlalchemy import ForeignKey, exists, and_
 from sqlalchemy.orm import relationship
 
-from etl import database
-
-
-def with_default_session(method):
-    def func_with_default_session(self, *args, **kws):
-        if self.session is None:
-            with database.db_session_context() as self.session:
-                result = method(self, *args, **kws)
-            self.session = None
-            return result
-        else:
-            return method(self, *args, **kws)
-    return func_with_default_session
+from etl import database, errors
 
 
 class Query:
+
     def __init__(self, model_cls):
         self.model_cls = model_cls
         self.session = None
 
-    @with_default_session
+    def check_session(self):
+        if self.session is None:
+            raise errors.ProgrammingError(
+                'Need to provide a session. Call self.with_session(session)'
+            )
+
     def exists(self, **kws):
+        self.check_session()
         for i, (k, v) in enumerate(kws.items()):
             check = (getattr(self.model_cls, k) == v)
             if i == 0:
@@ -35,12 +30,12 @@ class Query:
                 q &= check
         return self.session.query(exists().where(q)).scalar()
 
-    @with_default_session
     def get(self, key):
+        self.check_session()
         return self.session.query(self.model_cls).get(key)
 
-    @with_default_session
     def get_or_create(self, key, **kws):
+        self.check_session()
         obj = self.get(key)
         created = obj is None
         if created:
@@ -48,8 +43,8 @@ class Query:
             self.session.add(obj)
         return obj, created
 
-    @with_default_session
     def exists_or_create(self, **kws):
+        self.check_session()
         created = not self.exists(**kws)
         obj = None
         if created:
@@ -93,21 +88,26 @@ class Query:
             )
         return and_(*clauses)
 
-    @with_default_session
     def filter(self, **kws):
+        self.check_session()
         clause = self.filter_clause(**kws)
         return self.session.query(self.model_cls).filter(clause)
 
-    def set_session(self, session):
+    def with_session(self, session=None, **kws):
+        if session is None:
+            session = database.db_session(**kws)
         self.session = session
         return self
 
     def __call__(self, session=None):
-        return self.set_session(session)
+        return self.with_session(session)
 
 
 class Meta(DeclarativeMeta):
     def __init__(cls, classname, bases, dict_):
+        # Reason for using a semi-private here was to follow
+        # the SQLAlchemy pattern where all attributes except metadata which
+        # binds inconsistently.
         cls._query = Query(cls)
         super().__init__(classname, bases, dict_)
 
