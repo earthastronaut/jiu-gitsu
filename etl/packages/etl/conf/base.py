@@ -73,6 +73,8 @@ DATABASES = {
 # Github
 
 GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
+GITHUB_API_BASE_URL = 'api.github.com:443'
+GITHUB_RATELIMIT_REMAINING_MIN = 10
 
 # Prefect flows
 

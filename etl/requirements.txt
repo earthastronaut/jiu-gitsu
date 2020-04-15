@@ -8,9 +8,6 @@ PyYAML
 psycopg2-binary
 SQLAlchemy
 
-## For connecting to github to fetch issues
-github3.py
-
 ## For development
 ipython
 
