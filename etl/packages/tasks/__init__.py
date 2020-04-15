@@ -4,6 +4,5 @@ from . import (
     download_github_issues,
     etl_github_issue_events,
     etl_github_issues,
-    etl_github_repo,
     etl_github_users,
 )
