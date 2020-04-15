@@ -1,5 +1,5 @@
-## For timezones in python
-pytz
+## For better time handling in python
+arrow
 
 ## For reading yaml files for configuration
 PyYAML
