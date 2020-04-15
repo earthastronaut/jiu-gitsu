@@ -13,6 +13,7 @@ from .etl import (
 
 
 from . import (
+    errors,
     models,
     github,
 )
