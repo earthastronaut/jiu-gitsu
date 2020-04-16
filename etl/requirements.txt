@@ -1,18 +1,15 @@
 ## For better time handling in python
 arrow
 
-## For reading yaml files for configuration
-PyYAML
-
 ## Connect to postgres
 psycopg2-binary
 SQLAlchemy
-
-## For development
-ipython
 
 ## For task management and scheduling
 prefect[viz]
 
 ## For looking for file changes and executing register flows command
 watchdog[watchmedo]
+
+## For development
+ipython
