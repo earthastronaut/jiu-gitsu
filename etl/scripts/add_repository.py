@@ -25,19 +25,19 @@ if __name__ == '__main__':
     repository = pargs.repository
     organization = pargs.organization
     # TODO: confirm repository exists?
-
-    obj, created = (
-        etl
-        .models
-        .GitHubRepo
-        ._query
-        .exists_or_create(
-            repo_id=repository,
-            repo_name=repository,
-            repo_organization_name=organization,
+    with etl.db_session_context() as session:
+        obj, created = (
+            etl
+            .models
+            .GitHubRepo
+            ._query(session)
+            .exists_or_create(
+                repo_id=repository,
+                repo_name=repository,
+                repo_organization_name=organization,
+            )
         )
-    )
-    if created:
-        logger.info(f'Repository created {repository}')
-    else:
-        logger.info(f'Repository found {repository}')
+        if created:
+            logger.info(f'Repository created {repository}')
+        else:
+            logger.info(f'Repository found {repository}')
