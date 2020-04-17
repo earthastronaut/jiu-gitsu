@@ -5,6 +5,7 @@ import pytz
 import logging
 
 import etl
+from tasks import constants
 
 
 logger = logging.getLogger(__name__)
@@ -62,7 +63,7 @@ def main(**context):
             .DataLake
             ._query(session)
             .filter(
-                schema='github_issue',
+                schema=constants.GITHUB_ISSUE_SCHEMA,
                 dw_etl_at__is=None,
             )
         )

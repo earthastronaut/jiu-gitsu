@@ -1,7 +1,10 @@
 #!env python
+
 import logging
+import json
 
 import etl
+from tasks import constants
 
 
 logger = logging.getLogger(__name__)
@@ -32,15 +35,19 @@ def etl_users_from_issues():
             .DataLake
             ._query(session)
             .filter(
-                schema='github_issue',
+                schema=constants.GITHUB_ISSUE_SCHEMA,
                 dw_etl_at__is=None,
             )
         )
 
         unique_user_data = {}
         for dl_issue in iterrows:
-            ud = dl_issue.data['user']
-            unique_user_data[ud['id']] = ud
+            key = dl_issue.key
+            data = dl_issue.data
+            if isinstance(data, str):
+                data = json.loads(data)
+
+            unique_user_data[data['user']['id']] = data['user']
 
     with etl.db_session_context() as session:
         for user_data in unique_user_data.values():
@@ -56,7 +63,7 @@ def etl_users_from_issue_events():
             .DataLake
             ._query(session)
             .filter(
-                schema='github_issue_event',
+                schema=constants.GITHUB_ISSUE_EVENTS_SCHEMA,
                 dw_etl_at__is=None,
             )
         )
