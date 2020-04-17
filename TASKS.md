@@ -1,32 +1,4 @@
 
-
-## Task-3 implement ~~airflow~~ prefect flows
-
-get both flows working
-
-update download_events:
- 1. download issues
- 1. etl issues into db
- 1. query db for issues, github_issue.last_events_fetch_at < min or null
- 1. get events for issues
- 4. store data_lake and update github_issue.last_events_fetch_at
-
-
-Data Pipeline
-1. download_github_issues.py
-1. etl_github_repo.py
-1. etl_github_users.py
-1. etl_github_issues.py
-
-1. download_github_issue_events.py
-1. etl_github_users.py
-1. etl_github_issues.py
-
-
-## Task remove github client 
-
-https://api.github.com/repositories/80862584/issues?state=all&sort=updated&direction=asc&since=2000-01-01T00%3A00%3A00%2B00%3A00&page=33&per_page=300
-
 ## Task separate requirements dev
 
 ipython should be in a dev file
