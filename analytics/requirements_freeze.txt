@@ -49,7 +49,7 @@ jupyter-highlight-selected-word==0.2.0
 jupyter-latex-envs==1.4.6
 jupyter-nbextensions-configurator==0.4.1
 jupyterhub==1.0.0
-jupyterlab==1.2.1
+jupyterlab==1.2.21
 jupyterlab-server==1.0.6
 kiwisolver==1.1.0
 llvmlite==0.29.0
